@@ -181,6 +181,7 @@ Uses **EAS Build** (Expo's cloud build service). No Android Studio or local SDK 
 ```bash
 npm install -g eas-cli
 eas login
+
 ```
 
 ### Step 1 — Configure EAS in the project (once)
