@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Tabs, router } from 'expo-router';
-import { View, Text, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useProject } from '@/hooks/useProject';
 
@@ -61,13 +61,6 @@ export default function AppLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Inicio',
-          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="expenses"
         options={{
           title: 'Gastos',
@@ -82,6 +75,33 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Inicio',
+          tabBarIcon: ({ focused }) => (
+            <View style={{
+              width: 112, height: 112, borderRadius: 56,
+              backgroundColor: TAB_BAR_BG,
+              borderWidth: 2,
+              borderColor: focused ? TAB_ACTIVE : TAB_BORDER,
+              alignItems: 'center', justifyContent: 'center',
+              marginBottom: Platform.OS === 'ios' ? 28 : 16,
+              shadowColor: TAB_ACTIVE,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: focused ? 0.5 : 0.15,
+              shadowRadius: 8,
+              elevation: 8,
+            }}>
+              <Image
+                source={require('../../assets/images/sunnycolor.png')}
+                style={{ width: 72, height: 72, borderRadius: 16, opacity: focused ? 1 : 0.55 }}
+                resizeMode="contain"
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="payroll"
         options={{
           title: 'Obreros',
@@ -92,7 +112,7 @@ export default function AppLayout() {
         name="income"
         options={{
           title: 'Ingresos',
-          tabBarIcon: ({ focused }) => <TabIcon name="arrow-down-circle" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="cash" focused={focused} />,
         }}
       />
       {/* Hidden screens */}

@@ -113,3 +113,56 @@ src/
 supabase/
   migrations/         # SQL migrations
 ```
+
+---
+
+## 5. Deploy to Vercel
+
+### Prerequisites
+
+- A [Vercel](https://vercel.com/) account
+- The repo pushed to GitHub / GitLab / Bitbucket
+
+### Option A — Vercel Dashboard (recommended)
+
+1. Go to [vercel.com/new](https://vercel.com/new) and import your repository.
+2. Vercel will detect the `vercel.json` config automatically:
+   - **Build command**: `npx expo export --platform web`
+   - **Output directory**: `dist`
+3. Before deploying, add the environment variables under **Settings → Environment Variables**:
+
+   | Variable | Value |
+   |---|---|
+   | `EXPO_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` |
+   | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...` |
+
+4. Click **Deploy**.
+
+### Option B — Vercel CLI
+
+```bash
+# Install Vercel CLI (once)
+npm i -g vercel
+
+# Login
+vercel login
+
+# Deploy (follow the prompts)
+vercel
+
+# After adding env vars in the dashboard, promote to production
+vercel --prod
+```
+
+### Environment variables in the CLI
+
+```bash
+vercel env add EXPO_PUBLIC_SUPABASE_URL
+vercel env add EXPO_PUBLIC_SUPABASE_ANON_KEY
+```
+
+### Notes
+
+- Every `git push` to the main branch will trigger an automatic redeploy if the repo is linked to Vercel.
+- The `vercel.json` includes a rewrite rule (`/* → /index.html`) so Expo Router's client-side navigation works correctly.
+- The Supabase **anon key** is safe to expose publicly — RLS policies protect the data.

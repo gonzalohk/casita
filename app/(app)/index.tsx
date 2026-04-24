@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useBalance } from '@/hooks/useBalance';
@@ -153,14 +153,12 @@ export default function DashboardScreen() {
         {/* ── Header ── */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            {/* Casa icon */}
-            <View style={{
-              width: 44, height: 44, borderRadius: 14,
-              backgroundColor: C.surface,
-              justifyContent: 'center', alignItems: 'center',
-            }}>
-              <Ionicons name="home" size={20} color={C.accent} />
-            </View>
+            {/* Logo */}
+            <Image
+              source={require('../../assets/images/sunnycolor.png')}
+              style={{ width: 44, height: 44, borderRadius: 14 }}
+              resizeMode="contain"
+            />
             <View>
               <Text style={{ color: C.textMuted, fontSize: 10, letterSpacing: 1.2, fontWeight: '600', textTransform: 'uppercase', marginBottom: 3 }}>
                 {new Date().toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -30,7 +31,7 @@ export default function LoginScreen() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema), defaultValues: { email: '', password: '' } });
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
@@ -58,9 +59,13 @@ export default function LoginScreen() {
         <View style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
           {/* Header */}
           <View style={{ alignItems: 'center', marginBottom: 48 }}>
-            <Text style={{ fontSize: 40 }}>🏠</Text>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: '#f0f0ff', marginTop: 12 }}>
-              Casita
+            <Image
+              source={require('../../assets/images/sunnycolor.png')}
+              style={{ width: 80, height: 80, borderRadius: 20 }}
+              resizeMode="contain"
+            />
+            <Text style={{ fontSize: 28, fontWeight: '700', color: '#f0f0ff', marginTop: 16 }}>
+              Sunny-ficación
             </Text>
             <Text style={{ fontSize: 16, color: '#8888aa', marginTop: 4 }}>
               Gestión de construcción
