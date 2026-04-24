@@ -30,6 +30,7 @@ export interface IncomeEntry {
   description: string;
   source: IncomeSource;
   date: string;
+  phase_id: string | null;
   created_at: string;
 }
 
@@ -57,6 +58,7 @@ export interface Expense {
   description: string;
   date: string;
   receipt_url: string | null;
+  phase_id: string | null;
   created_at: string;
   // joined
   expense_categories?: ExpenseCategory;
@@ -74,6 +76,7 @@ export interface Material {
   stock_current: number;
   stock_min: number;
   category: string;
+  phase_id: string | null;
   created_at: string;
 }
 
@@ -181,6 +184,19 @@ export interface Supplier {
 export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
 export type SupplierUpdate = Partial<Omit<Supplier, 'id' | 'project_id' | 'created_at'>>;
 
+// ── project_phases ──────────────────────────────────────────
+export interface ProjectPhase {
+  id: string;
+  project_id: string;
+  name: string;
+  color: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export type ProjectPhaseInsert = Omit<ProjectPhase, 'id' | 'created_at'>;
+export type ProjectPhaseUpdate = Partial<Omit<ProjectPhase, 'id' | 'project_id' | 'created_at'>>;
+
 // ── schedule_tasks ───────────────────────────────────────────
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
 
@@ -189,16 +205,30 @@ export interface ScheduleTask {
   project_id: string;
   name: string;
   description: string | null;
-  phase: string;
+  phase: string | null;
+  phase_id: string | null;
   start_date: string;
   end_date: string;
   status: TaskStatus;
   progress: number;
   created_at: string;
+  // joined
+  project_phases?: ProjectPhase;
 }
 
-export type ScheduleTaskInsert = Omit<ScheduleTask, 'id' | 'created_at'>;
-export type ScheduleTaskUpdate = Partial<Omit<ScheduleTask, 'id' | 'project_id' | 'created_at'>>;
+export type ScheduleTaskInsert = Omit<ScheduleTask, 'id' | 'created_at' | 'project_phases'>;
+export type ScheduleTaskUpdate = Partial<Omit<ScheduleTask, 'id' | 'project_id' | 'created_at' | 'project_phases'>>;
+
+// ── phase financial summary ─────────────────────────────────
+export interface PhaseSummary {
+  phase_id: string;
+  phase_name: string;
+  phase_color: string;
+  total_income: number;
+  total_expenses: number;
+  materials_count: number;
+  balance: number;
+}
 
 // ── combined / UI types ──────────────────────────────────────
 export interface TransactionItem {

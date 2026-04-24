@@ -13,7 +13,7 @@ export function useScheduleTasks() {
       if (!project) return [];
       const { data, error } = await supabase
         .from('schedule_tasks')
-        .select('*')
+        .select('*, project_phases(id, name, color, sort_order)')
         .eq('project_id', project.id)
         .order('start_date', { ascending: true });
       if (error) throw error;

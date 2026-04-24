@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import { useScheduleTask, useUpdateScheduleTask, useDeleteScheduleTask } from '@/hooks/useSchedule';
+import { usePhases } from '@/hooks/usePhases';
 import { TaskStatus } from '@/types/database';
 import { DateField } from '@/components/DateField';
 
@@ -20,7 +21,7 @@ const PHASES = [
 const taskSchema = z.object({
   name:        z.string().min(3, 'Mínimo 3 caracteres'),
   description: z.string().optional(),
-  phase:       z.string().min(1, 'Seleccioná una fase'),
+  phase_id:    z.string().min(1, 'Seleccioná una fase'),
   start_date:  z.string().min(1, 'Campo requerido'),
   end_date:    z.string().min(1, 'Campo requerido'),
   status:      z.enum(['pending', 'in_progress', 'completed', 'delayed']),
@@ -59,15 +60,15 @@ export default function ScheduleTaskDetailScreen() {
   const { data: task, isPending } = useScheduleTask(id!);
   const updateTask = useUpdateScheduleTask();
   const deleteTask = useDeleteScheduleTask();
+  const { data: phases = [] } = usePhases();
   const [phaseModalOpen, setPhaseModalOpen] = useState(false);
-  const [customPhase, setCustomPhase] = useState('');
 
   const { control, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<TaskForm>({
     resolver: zodResolver(taskSchema),
     values: task ? {
       name:        task.name,
       description: task.description ?? '',
-      phase:       task.phase,
+      phase_id:    task.phase_id ?? '',
       start_date:  task.start_date,
       end_date:    task.end_date,
       status:      task.status,
@@ -76,17 +77,20 @@ export default function ScheduleTaskDetailScreen() {
   });
 
   const selectedStatus = watch('status');
-  const selectedPhase = watch('phase');
+  const selectedPhaseId = watch('phase_id');
+  const selectedPhase = phases.find(p => p.id === selectedPhaseId);
 
   const onSubmit = async (data: TaskForm) => {
     if (!task) return;
+    const ph = phases.find(p => p.id === data.phase_id);
     const progress = data.status === 'completed' ? 100 : parseInt(data.progress) || 0;
     try {
       await updateTask.mutateAsync({
         id: task.id,
         name:        data.name.trim(),
         description: data.description?.trim() || null,
-        phase:       data.phase,
+        phase_id:    data.phase_id,
+        phase:       ph?.name ?? null,
         start_date:  data.start_date,
         end_date:    data.end_date,
         status:      data.status,
@@ -208,17 +212,27 @@ export default function ScheduleTaskDetailScreen() {
           {errors.name && <Text style={{ color: C.error, fontSize: 12, marginBottom: 16 }}>{errors.name.message}</Text>}
 
           {/* Fase */}
-          <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>FASE</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600' }}>FASE</Text>
+            <TouchableOpacity onPress={() => router.push('/(app)/schedule/phases')}>
+              <Text style={{ color: C.accent, fontSize: 11 }}>+ Gestionar fases</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             onPress={() => setPhaseModalOpen(true)}
-            style={[fieldBorder(!!errors.phase), { flexDirection: 'row', alignItems: 'center', marginBottom: errors.phase ? 4 : 24 }]}
+            style={[fieldBorder(!!errors.phase_id), { flexDirection: 'row', alignItems: 'center', marginBottom: errors.phase_id ? 4 : 24 }]}
           >
-            <Text style={{ flex: 1, color: selectedPhase ? C.text : C.muted, fontSize: 16 }}>
-              {selectedPhase || 'Seleccioná una fase'}
-            </Text>
+            {selectedPhase ? (
+              <>
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: selectedPhase.color, marginRight: 10 }} />
+                <Text style={{ flex: 1, color: C.text, fontSize: 16 }}>{selectedPhase.name}</Text>
+              </>
+            ) : (
+              <Text style={{ flex: 1, color: C.muted, fontSize: 16 }}>Seleccioná una fase</Text>
+            )}
             <Ionicons name="chevron-down" size={16} color={C.muted} />
           </TouchableOpacity>
-          {errors.phase && <Text style={{ color: C.error, fontSize: 12, marginBottom: 16 }}>{errors.phase.message}</Text>}
+          {errors.phase_id && <Text style={{ color: C.error, fontSize: 12, marginBottom: 16 }}>{errors.phase_id.message}</Text>}
 
           {/* Avance */}
           <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>AVANCE (%)</Text>
@@ -306,49 +320,24 @@ export default function ScheduleTaskDetailScreen() {
           activeOpacity={1}
           onPress={() => setPhaseModalOpen(false)}
         >
-          <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '80%' }}>
+          <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
             <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 16 }}>FASE</Text>
-
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: '#12141c', borderRadius: 10, paddingHorizontal: 12,
-              paddingVertical: 10, marginBottom: 12,
-            }}>
-              <TextInput
-                value={customPhase}
-                onChangeText={setCustomPhase}
-                placeholder="Escribí una fase personalizada..."
-                placeholderTextColor={C.muted}
-                style={{ flex: 1, color: C.text, fontSize: 14 }}
-              />
-              {customPhase.trim().length > 0 && (
-                <TouchableOpacity onPress={() => {
-                  setValue('phase', customPhase.trim());
-                  setCustomPhase('');
-                  setPhaseModalOpen(false);
-                }}>
-                  <Ionicons name="checkmark-circle" size={22} color={C.accent} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {PHASES.map((phase) => (
-                <TouchableOpacity
-                  key={phase}
-                  onPress={() => { setValue('phase', phase); setPhaseModalOpen(false); }}
-                  style={{
-                    flexDirection: 'row', alignItems: 'center', paddingVertical: 14,
-                    borderBottomWidth: 1, borderBottomColor: C.border + '60',
-                  }}
-                >
-                  <Text style={{ flex: 1, color: C.text, fontSize: 16 }}>{phase}</Text>
-                  {selectedPhase === phase && (
-                    <Ionicons name="checkmark" size={20} color={C.accent} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {phases.map((phase) => (
+              <TouchableOpacity
+                key={phase.id}
+                onPress={() => { setValue('phase_id', phase.id); setPhaseModalOpen(false); }}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', paddingVertical: 14,
+                  borderBottomWidth: 1, borderBottomColor: C.border + '60',
+                }}
+              >
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: phase.color, marginRight: 14 }} />
+                <Text style={{ flex: 1, color: C.text, fontSize: 16 }}>{phase.name}</Text>
+                {selectedPhaseId === phase.id && (
+                  <Ionicons name="checkmark" size={20} color={C.accent} />
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
         </TouchableOpacity>
       </Modal>

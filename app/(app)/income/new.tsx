@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Modal,
@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateIncome } from '@/hooks/useIncome';
+import { usePhases } from '@/hooks/usePhases';
 import { useProjectStore } from '@/stores/projectStore';
 import { todayISO } from '@/utils/formatters';
 import { DateField } from '@/components/DateField';
@@ -18,6 +19,7 @@ const schema = z.object({
   amount: z.string().refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'Debe ser > 0'),
   source: z.enum(['personal', 'loan', 'other']),
   date: z.string().min(1, 'Campo requerido'),
+  phase_id: z.string().min(1, 'Seleccioná una fase'),
 });
 
 type IncomeForm = z.infer<typeof schema>;
@@ -41,15 +43,26 @@ const C = {
 export default function NewIncomeScreen() {
   const { project } = useProjectStore();
   const createIncome = useCreateIncome();
+  const { data: phases = [] } = usePhases();
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  const [phaseModalOpen, setPhaseModalOpen] = useState(false);
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<IncomeForm>({
     resolver: zodResolver(schema),
-    defaultValues: { description: '', amount: '', source: 'personal', date: todayISO() },
+    defaultValues: { description: '', amount: '', source: 'personal', date: todayISO(), phase_id: '' },
   });
 
   const selectedSource = watch('source');
   const selectedSourceLabel = SOURCES.find(s => s.value === selectedSource)?.label ?? '';
+  const selectedPhaseId = watch('phase_id');
+  const selectedPhase = phases.find(p => p.id === selectedPhaseId);
+
+  useEffect(() => {
+    if (phases.length > 0 && !selectedPhaseId) {
+      const obraGruesa = phases.find(p => p.name.toLowerCase().includes('obra gruesa') || p.name.toLowerCase().includes('obra bruta'));
+      if (obraGruesa) setValue('phase_id', obraGruesa.id);
+    }
+  }, [phases]);
 
   const onSubmit = async (data: IncomeForm) => {
     if (!project) return;
@@ -60,6 +73,7 @@ export default function NewIncomeScreen() {
         amount: parseFloat(data.amount),
         source: data.source,
         date: data.date,
+        phase_id: data.phase_id || null,
       });
       router.back();
     } catch (err: any) {
@@ -164,6 +178,31 @@ export default function NewIncomeScreen() {
               )}
             />
 
+            {/* Fase */}
+            <View>
+              <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, marginBottom: 2 }}>FASE</Text>
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                  borderBottomWidth: 1.5,
+                  borderBottomColor: errors.phase_id ? C.error : C.border,
+                  paddingVertical: 12,
+                }}
+                onPress={() => phases.length > 0 ? setPhaseModalOpen(true) : router.push('/(app)/schedule/phases')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  {selectedPhase && (
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: selectedPhase.color }} />
+                  )}
+                  <Text style={{ color: selectedPhase ? C.text : C.border, fontSize: 16 }}>
+                    {phases.length === 0 ? 'Primero creá una fase →' : selectedPhase ? selectedPhase.name : 'Seleccioná una fase'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-down" size={18} color={C.muted} />
+              </TouchableOpacity>
+              {errors.phase_id && <Text style={{ color: C.error, fontSize: 12, marginTop: 4 }}>{errors.phase_id.message}</Text>}
+            </View>
+
             <TouchableOpacity
               style={{
                 backgroundColor: C.accent,
@@ -222,6 +261,37 @@ export default function NewIncomeScreen() {
                   <Text style={{ color: selectedSource === s.value ? C.accent : C.text, fontSize: 15 }}>{s.label}</Text>
                 </View>
                 {selectedSource === s.value && <Ionicons name="checkmark" size={18} color={C.accent} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Phase modal */}
+      <Modal visible={phaseModalOpen} transparent animationType="slide" onRequestClose={() => setPhaseModalOpen(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setPhaseModalOpen(false)}
+        >
+          <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+            <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 16 }}>FASE</Text>
+            <TouchableOpacity
+              onPress={() => { setValue('phase_id', ''); setPhaseModalOpen(false); }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border + '60' }}
+            >
+              <Text style={{ flex: 1, color: C.muted, fontSize: 16 }}>Sin fase asignada</Text>
+              {!selectedPhaseId && <Ionicons name="checkmark" size={20} color={C.accent} />}
+            </TouchableOpacity>
+            {phases.map(phase => (
+              <TouchableOpacity
+                key={phase.id}
+                onPress={() => { setValue('phase_id', phase.id); setPhaseModalOpen(false); }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border + '60' }}
+              >
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: phase.color, marginRight: 14 }} />
+                <Text style={{ flex: 1, color: C.text, fontSize: 16 }}>{phase.name}</Text>
+                {selectedPhaseId === phase.id && <Ionicons name="checkmark" size={20} color={C.accent} />}
               </TouchableOpacity>
             ))}
           </View>

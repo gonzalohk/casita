@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useExpenses, useDeleteExpense, useExpenseCategories } from '@/hooks/useExpenses';
@@ -69,6 +69,7 @@ function ExpenseRow({ item, onDelete }: { item: Expense; onDelete: (id: string) 
 export default function ExpensesScreen() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const { data: expenses = [], isLoading, refetch } = useExpenses({ category_id: selectedCategory });
   const { data: categories = [] } = useExpenseCategories();
@@ -121,40 +122,31 @@ export default function ExpensesScreen() {
           />
         </View>
 
-        {/* Category filter */}
-        {categories.length > 0 && (
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-            <TouchableOpacity
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 8,
-                borderWidth: 1.5,
-                borderColor: !selectedCategory ? '#4f7bff' : '#2c3050',
-                backgroundColor: !selectedCategory ? '#4f7bff18' : 'transparent',
-              }}
-              onPress={() => setSelectedCategory(undefined)}
-            >
-              <Text style={{ color: !selectedCategory ? '#4f7bff' : '#7880a0', fontSize: 12, fontWeight: '500' }}>Todos</Text>
-            </TouchableOpacity>
-            {categories.map((c) => (
-              <TouchableOpacity
-                key={c.id}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  borderWidth: 1.5,
-                  borderColor: selectedCategory === c.id ? c.color : '#2c3050',
-                  backgroundColor: selectedCategory === c.id ? c.color + '20' : 'transparent',
-                }}
-                onPress={() => setSelectedCategory(selectedCategory === c.id ? undefined : c.id)}
-              >
-                <Text style={{ color: selectedCategory === c.id ? c.color : '#7880a0', fontSize: 12, fontWeight: '500' }}>{c.name}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Category filter dropdown */}
+        <TouchableOpacity
+          onPress={() => setFilterModalOpen(true)}
+          style={{
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+            backgroundColor: '#1c1c2e', borderRadius: 12,
+            paddingHorizontal: 14, paddingVertical: 11,
+            marginBottom: 4,
+            borderWidth: 1.5,
+            borderColor: selectedCategory ? (categories.find(c => c.id === selectedCategory)?.color ?? '#4f7bff') : '#2c3050',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {selectedCategory && (
+              <View style={{
+                width: 10, height: 10, borderRadius: 5,
+                backgroundColor: categories.find(c => c.id === selectedCategory)?.color ?? '#4f7bff',
+              }} />
+            )}
+            <Text style={{ color: selectedCategory ? '#f0f0ff' : '#7880a0', fontSize: 14 }}>
+              {selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : 'Todos'}
+            </Text>
           </View>
-        )}
+          <Ionicons name="chevron-down" size={16} color="#7880a0" />
+        </TouchableOpacity>
       </View>
 
       {/* List */}
@@ -190,6 +182,57 @@ export default function ExpensesScreen() {
           refreshing={isLoading}
         />
       )}
+
+      {/* Filter modal */}
+      <Modal visible={filterModalOpen} transparent animationType="slide" onRequestClose={() => setFilterModalOpen(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setFilterModalOpen(false)}
+        >
+          <View style={{ backgroundColor: '#1a1d27', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 24 }}>
+            <View style={{
+              flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+              padding: 20, borderBottomWidth: 1, borderBottomColor: '#2c3050',
+            }}>
+              <Text style={{ color: '#f0f0ff', fontWeight: '600', fontSize: 16 }}>Filtrar por categoría</Text>
+              <TouchableOpacity onPress={() => setFilterModalOpen(false)}>
+                <Ionicons name="close" size={20} color="#7880a0" />
+              </TouchableOpacity>
+            </View>
+            {/* Todos */}
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                paddingHorizontal: 24, paddingVertical: 15,
+                borderBottomWidth: 1, borderBottomColor: '#2c305040',
+              }}
+              onPress={() => { setSelectedCategory(undefined); setFilterModalOpen(false); }}
+            >
+              <Text style={{ color: !selectedCategory ? '#4f7bff' : '#f0f0ff', fontSize: 15 }}>Todos</Text>
+              {!selectedCategory && <Ionicons name="checkmark" size={18} color="#4f7bff" />}
+            </TouchableOpacity>
+            {categories.map((c, i) => (
+              <TouchableOpacity
+                key={c.id}
+                style={{
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                  paddingHorizontal: 24, paddingVertical: 15,
+                  borderBottomWidth: i < categories.length - 1 ? 1 : 0,
+                  borderBottomColor: '#2c305040',
+                }}
+                onPress={() => { setSelectedCategory(c.id); setFilterModalOpen(false); }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: c.color }} />
+                  <Text style={{ color: selectedCategory === c.id ? c.color : '#f0f0ff', fontSize: 15 }}>{c.name}</Text>
+                </View>
+                {selectedCategory === c.id && <Ionicons name="checkmark" size={18} color={c.color} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

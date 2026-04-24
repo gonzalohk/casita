@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  ActivityIndicator, ScrollView, Alert,
+  ActivityIndicator, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useScheduleTasks, useUpdateScheduleTask, useDeleteScheduleTask } from '@/hooks/useSchedule';
+import { useScheduleTasks, useUpdateScheduleTask } from '@/hooks/useSchedule';
+import { usePhases } from '@/hooks/usePhases';
 import { ScheduleTask, TaskStatus } from '@/types/database';
 import { formatDate } from '@/utils/formatters';
 
@@ -146,8 +147,8 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 export default function ScheduleIndexScreen() {
   const { data: tasks = [], isPending, refetch } = useScheduleTasks();
+  const { data: phases = [] } = usePhases();
   const updateTask = useUpdateScheduleTask();
-  const deleteTask = useDeleteScheduleTask();
   const [filter, setFilter] = useState<FilterKey>('all');
 
   const today = new Date().toISOString().split('T')[0];
@@ -158,8 +159,27 @@ export default function ScheduleIndexScreen() {
     return t.status === filter;
   });
 
-  // Group by phase
-  const phases = Array.from(new Set(filtered.map((t) => t.phase)));
+  // Group tasks: first by DB phase (sort_order), then legacy tasks without phase_id
+  const grouped: Array<{ key: string; label: string; color: string; tasks: ScheduleTask[] }> = [];
+
+  const sortedPhases = [...phases].sort((a, b) => a.sort_order - b.sort_order);
+  for (const ph of sortedPhases) {
+    const phaseTasks = filtered.filter(t => t.phase_id === ph.id);
+    if (phaseTasks.length > 0) {
+      grouped.push({ key: ph.id, label: ph.name, color: ph.color, tasks: phaseTasks });
+    }
+  }
+  // Legacy tasks (no phase_id) grouped by their text phase
+  const unphased = filtered.filter(t => !t.phase_id);
+  const legacyPhaseNames = Array.from(new Set(unphased.map(t => t.phase ?? 'Sin fase')));
+  for (const name of legacyPhaseNames) {
+    grouped.push({
+      key: `legacy-${name}`,
+      label: name,
+      color: C.textMuted,
+      tasks: unphased.filter(t => (t.phase ?? 'Sin fase') === name),
+    });
+  }
 
   const handleStatusChange = async (task: ScheduleTask, status: TaskStatus) => {
     const progress = status === 'completed' ? 100 : status === 'in_progress' ? Math.max(task.progress, 10) : task.progress;
@@ -191,6 +211,16 @@ export default function ScheduleIndexScreen() {
         <Text style={{ flex: 1, color: C.textPrimary, fontSize: 20, fontWeight: '700' }}>
           Cronograma
         </Text>
+        <TouchableOpacity
+          onPress={() => router.push('/(app)/schedule/phases')}
+          style={{
+            width: 36, height: 36, borderRadius: 10,
+            backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center',
+            marginRight: 4,
+          }}
+        >
+          <Ionicons name="layers-outline" size={18} color={C.textSecondary} />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => router.push('/(app)/schedule/new')}
           style={{
@@ -275,28 +305,40 @@ export default function ScheduleIndexScreen() {
           onScrollBeginDrag={() => {}}
           refreshControl={undefined}
         >
-          {phases.map((phase) => {
-            const phaseTasks = filtered.filter(t => t.phase === phase);
-            return (
-              <View key={phase}>
+          {grouped.length === 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 }}>
+              <Text style={{ color: C.textMuted, textAlign: 'center', fontSize: 14 }}>
+                Sin tareas para este filtro
+              </Text>
+            </View>
+          ) : grouped.map((group) => (
+            <View key={group.key}>
+              {/* Phase header */}
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 8,
+                marginBottom: 10, marginTop: 8,
+              }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: group.color }} />
                 <Text style={{
                   color: C.textSecondary, fontSize: 11, letterSpacing: 1,
-                  fontWeight: '600', marginBottom: 10, marginTop: 4,
-                  textTransform: 'uppercase',
+                  fontWeight: '700', textTransform: 'uppercase', flex: 1,
                 }}>
-                  {phase}
+                  {group.label}
                 </Text>
-                {phaseTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onPress={() => router.push(`/(app)/schedule/${task.id}`)}
-                    onStatusChange={(status) => handleStatusChange(task, status)}
-                  />
-                ))}
+                <Text style={{ color: C.textMuted, fontSize: 11 }}>
+                  {group.tasks.filter(t => t.status === 'completed').length}/{group.tasks.length}
+                </Text>
               </View>
-            );
-          })}
+              {group.tasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onPress={() => router.push(`/(app)/schedule/${task.id}`)}
+                  onStatusChange={(status) => handleStatusChange(task, status)}
+                />
+              ))}
+            </View>
+          ))}
         </ScrollView>
       )}
     </View>

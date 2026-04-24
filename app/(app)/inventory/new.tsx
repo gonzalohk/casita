@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Modal,
@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateMaterial } from '@/hooks/useMaterials';
+import { usePhases } from '@/hooks/usePhases';
 import { useProjectStore } from '@/stores/projectStore';
 
 const schema = z.object({
@@ -21,6 +22,7 @@ const schema = z.object({
   stock_min: z
     .string()
     .refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) >= 0, 'Debe ser >= 0'),
+  phase_id: z.string().min(1, 'Seleccioná una fase'),
 });
 
 type MaterialForm = z.infer<typeof schema>;
@@ -94,16 +96,27 @@ function PickerModal({ visible, title, options, selected, onSelect, onClose }: {
 export default function NewMaterialScreen() {
   const { project } = useProjectStore();
   const createMaterial = useCreateMaterial();
+  const { data: phases = [] } = usePhases();
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [unitModalOpen, setUnitModalOpen] = useState(false);
+  const [phaseModalOpen, setPhaseModalOpen] = useState(false);
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<MaterialForm>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', category: '', unit: 'unidad', stock_current: '0', stock_min: '0' },
+    defaultValues: { name: '', category: '', unit: 'unidad', stock_current: '0', stock_min: '0', phase_id: '' },
   });
 
   const selectedCategory = watch('category');
   const selectedUnit = watch('unit');
+  const selectedPhaseId = watch('phase_id');
+  const selectedPhase = phases.find(p => p.id === selectedPhaseId);
+
+  useEffect(() => {
+    if (phases.length > 0 && !selectedPhaseId) {
+      const obraGruesa = phases.find(p => p.name.toLowerCase().includes('obra gruesa') || p.name.toLowerCase().includes('obra bruta'));
+      if (obraGruesa) setValue('phase_id', obraGruesa.id);
+    }
+  }, [phases]);
 
   const onSubmit = async (data: MaterialForm) => {
     if (!project) return;
@@ -115,6 +128,7 @@ export default function NewMaterialScreen() {
         unit: data.unit.trim(),
         stock_current: parseFloat(data.stock_current),
         stock_min: parseFloat(data.stock_min),
+        phase_id: data.phase_id || null,
       });
       router.back();
     } catch (err: any) {
@@ -265,6 +279,31 @@ export default function NewMaterialScreen() {
               </View>
             </View>
 
+            {/* Fase */}
+            <View>
+              <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, marginBottom: 2 }}>FASE</Text>
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                  borderBottomWidth: 1.5,
+                  borderBottomColor: errors.phase_id ? C.error : C.border,
+                  paddingVertical: 12,
+                }}
+                onPress={() => phases.length > 0 ? setPhaseModalOpen(true) : router.push('/(app)/schedule/phases')}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  {selectedPhase && (
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: selectedPhase.color }} />
+                  )}
+                  <Text style={{ color: selectedPhase ? C.text : C.border, fontSize: 16 }}>
+                    {phases.length === 0 ? 'Primero creá una fase →' : selectedPhase ? selectedPhase.name : 'Seleccioná una fase'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-down" size={18} color={C.muted} />
+              </TouchableOpacity>
+              {errors.phase_id && <Text style={{ color: C.error, fontSize: 12, marginTop: 4 }}>{errors.phase_id.message}</Text>}
+            </View>
+
             {/* Submit */}
             <TouchableOpacity
               style={{
@@ -303,6 +342,37 @@ export default function NewMaterialScreen() {
         onSelect={(v) => setValue('unit', v, { shouldValidate: true })}
         onClose={() => setUnitModalOpen(false)}
       />
+
+      {/* Phase modal */}
+      <Modal visible={phaseModalOpen} transparent animationType="slide" onRequestClose={() => setPhaseModalOpen(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setPhaseModalOpen(false)}
+        >
+          <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
+            <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 16 }}>FASE</Text>
+            <TouchableOpacity
+              onPress={() => { setValue('phase_id', ''); setPhaseModalOpen(false); }}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border + '60' }}
+            >
+              <Text style={{ flex: 1, color: C.muted, fontSize: 16 }}>Sin fase asignada</Text>
+              {!selectedPhaseId && <Ionicons name="checkmark" size={20} color={C.accent} />}
+            </TouchableOpacity>
+            {phases.map(phase => (
+              <TouchableOpacity
+                key={phase.id}
+                onPress={() => { setValue('phase_id', phase.id); setPhaseModalOpen(false); }}
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border + '60' }}
+              >
+                <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: phase.color, marginRight: 14 }} />
+                <Text style={{ flex: 1, color: C.text, fontSize: 16 }}>{phase.name}</Text>
+                {selectedPhaseId === phase.id && <Ionicons name="checkmark" size={20} color={C.accent} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 }

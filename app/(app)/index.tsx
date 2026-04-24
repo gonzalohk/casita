@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useBalance } from '@/hooks/useBalance';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useIncome } from '@/hooks/useIncome';
+import { usePhases } from '@/hooks/usePhases';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { formatCurrency, formatDate, getPctColor, clamp } from '@/utils/formatters';
@@ -116,6 +117,7 @@ export default function DashboardScreen() {
   const { data: balance, isLoading: loadingBalance, refetch } = useBalance();
   const { data: expenses = [] } = useExpenses();
   const { data: income = [] } = useIncome();
+  const { data: phases = [] } = usePhases();
 
   const recentItems = [
     ...expenses.slice(0, 5).map((e) => ({
@@ -190,6 +192,62 @@ export default function DashboardScreen() {
           </View>
         )}
 
+        {/* ── Fases de obra ── */}
+        {phases.length > 0 && (
+          <>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ color: C.textSecondary, fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>
+                Fases de obra
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(app)/schedule/phases')}>
+                <Text style={{ color: C.accent, fontSize: 12 }}>Ver todas</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 24 }}
+              contentContainerStyle={{ gap: 10, paddingRight: 4 }}
+            >
+              {phases.map(ph => {
+                const phIncome = income.filter(i => i.phase_id === ph.id).reduce((s, i) => s + i.amount, 0);
+                const phExpenses = expenses.filter(e => e.phase_id === ph.id).reduce((s, e) => s + e.amount, 0);
+                const phBalance = phIncome - phExpenses;
+                return (
+                  <TouchableOpacity
+                    key={ph.id}
+                    onPress={() => router.push('/(app)/schedule/phases')}
+                    style={{
+                      backgroundColor: C.surface,
+                      borderRadius: 14,
+                      padding: 14,
+                      width: 150,
+                      borderLeftWidth: 3,
+                      borderLeftColor: ph.color,
+                    }}
+                  >
+                    <Text style={{ color: C.textPrimary, fontSize: 13, fontWeight: '700', marginBottom: 10 }} numberOfLines={1}>
+                      {ph.name}
+                    </Text>
+                    <Text style={{ color: C.textMuted, fontSize: 10, marginBottom: 2 }}>Gastos</Text>
+                    <Text style={{ color: C.red, fontSize: 14, fontWeight: '700', marginBottom: 8 }}>
+                      {formatCurrency(phExpenses)}
+                    </Text>
+                    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginBottom: 8 }} />
+                    <Text style={{
+                      fontSize: 12, fontWeight: '700',
+                      color: phBalance >= 0 ? C.green : C.red,
+                    }}>
+                      {phBalance >= 0 ? '+' : ''}{formatCurrency(phBalance)}
+                    </Text>
+                    <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 1 }}>balance</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
+
         {/* ── Alertas ── */}
         {balance && balance.balance < balance.budget * 0.1 && balance.balance >= 0 && (
           <View style={{
@@ -247,9 +305,9 @@ export default function DashboardScreen() {
               onPress={() => router.push('/(app)/inventory/')}
             />
             <QuickAction
-              icon="business-outline"
-              label="Proveedores"
-              onPress={() => router.push('/(app)/suppliers/')}
+              icon="layers-outline"
+              label="Fases"
+              onPress={() => router.push('/(app)/schedule/phases')}
             />
             <QuickAction
               icon="calendar-outline"
