@@ -166,3 +166,58 @@ vercel env add EXPO_PUBLIC_SUPABASE_ANON_KEY
 - Every `git push` to the main branch will trigger an automatic redeploy if the repo is linked to Vercel.
 - The `vercel.json` includes a rewrite rule (`/* → /index.html`) so Expo Router's client-side navigation works correctly.
 - The Supabase **anon key** is safe to expose publicly — RLS policies protect the data.
+
+---
+
+## 6. Build Android APK
+
+Uses **EAS Build** (Expo's cloud build service). No Android Studio or local SDK required.
+
+### Prerequisites
+
+- An [Expo account](https://expo.dev/signup) (free)
+- EAS CLI installed
+
+```bash
+npm install -g eas-cli
+eas login
+```
+
+### Step 1 — Configure EAS in the project (once)
+
+```bash
+eas build:configure
+```
+
+This creates an `eas.json` file. Confirm the prompts with the defaults.
+
+### Step 2 — Add environment variables to EAS
+
+```bash
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://mjlvolbboodgtulcmmbw.supabase.co"
+eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<your-anon-key>"
+```
+
+### Step 3 — Build the APK
+
+```bash
+# APK instalable directo (para compartir / probar)
+eas build --platform android --profile preview
+```
+
+EAS te dará un link de descarga cuando termine (~15 min). Instalalo en cualquier Android habilitando "Instalar desde fuentes desconocidas".
+
+### Step 4 — Build para Google Play Store (AAB)
+
+```bash
+eas build --platform android --profile production
+```
+
+### Build profiles summary
+
+| Profile | Output | Use case |
+|---|---|---|
+| `preview` | APK | Share / install directly |
+| `production` | AAB | Google Play Store |
+
+> **iOS**: Requires an Apple Developer account ($99/year). Run `eas build --platform ios --profile production` once you have the account set up.

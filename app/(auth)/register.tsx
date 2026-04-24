@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Link } from 'expo-router';
@@ -31,6 +30,8 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const {
     control,
@@ -40,20 +41,22 @@ export default function RegisterScreen() {
 
   const onSubmit = async (data: RegisterForm) => {
     setIsLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    const redirectTo = Platform.OS === 'web'
+      ? `${window.location.origin}/`
+      : 'casita://';
     const { error } = await supabase.auth.signUp({
       email: data.email.trim().toLowerCase(),
       password: data.password,
+      options: { emailRedirectTo: redirectTo },
     });
     setIsLoading(false);
 
     if (error) {
-      Alert.alert('Error al registrarse', error.message);
+      setErrorMsg(error.message);
     } else {
-      Alert.alert(
-        'Cuenta creada',
-        'Revisá tu email para confirmar la cuenta, luego podés ingresar.',
-        [{ text: 'OK' }]
-      );
+      setSuccessMsg('¡Cuenta creada! Revisá tu email y hacé clic en el link de confirmación para activar tu cuenta.');
     }
   };
 
@@ -85,6 +88,18 @@ export default function RegisterScreen() {
           </View>
 
           <View style={{ gap: 16 }}>
+            {/* Success banner */}
+            {!!successMsg && (
+              <View style={{ backgroundColor: '#16532820', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: '#2dd68a50' }}>
+                <Text style={{ color: '#2dd68a', fontSize: 14, lineHeight: 20 }}>{successMsg}</Text>
+              </View>
+            )}
+            {/* Error banner */}
+            {!!errorMsg && (
+              <View style={{ backgroundColor: '#f0707020', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: '#f0707050' }}>
+                <Text style={{ color: '#f07070', fontSize: 14 }}>{errorMsg}</Text>
+              </View>
+            )}
             {/* Email */}
             <View>
               <Text style={{ color: '#8888aa', marginBottom: 6, fontSize: 14 }}>Email</Text>

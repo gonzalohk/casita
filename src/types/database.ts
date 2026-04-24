@@ -161,6 +161,45 @@ export interface MonthlyExpense {
   total: number;
 }
 
+// ── suppliers ────────────────────────────────────────────────
+export type SupplierCategory = 'materials' | 'services' | 'equipment' | 'other';
+export type SupplierStatus = 'active' | 'inactive';
+
+export interface Supplier {
+  id: string;
+  project_id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  category: SupplierCategory;
+  notes: string | null;
+  status: SupplierStatus;
+  created_at: string;
+}
+
+export type SupplierInsert = Omit<Supplier, 'id' | 'created_at'>;
+export type SupplierUpdate = Partial<Omit<Supplier, 'id' | 'project_id' | 'created_at'>>;
+
+// ── schedule_tasks ───────────────────────────────────────────
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
+
+export interface ScheduleTask {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string | null;
+  phase: string;
+  start_date: string;
+  end_date: string;
+  status: TaskStatus;
+  progress: number;
+  created_at: string;
+}
+
+export type ScheduleTaskInsert = Omit<ScheduleTask, 'id' | 'created_at'>;
+export type ScheduleTaskUpdate = Partial<Omit<ScheduleTask, 'id' | 'project_id' | 'created_at'>>;
+
 // ── combined / UI types ──────────────────────────────────────
 export interface TransactionItem {
   id: string;

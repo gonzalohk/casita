@@ -51,13 +51,14 @@ export default function AppLayout() {
           backgroundColor: TAB_BAR_BG,
           borderTopColor: TAB_BORDER,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 80 : 62,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 90 : 72,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+          paddingTop: 10,
         },
         tabBarActiveTintColor: TAB_ACTIVE,
         tabBarInactiveTintColor: TAB_INACTIVE,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '500', marginTop: 2 },
       }}
     >
       <Tabs.Screen
@@ -68,44 +69,31 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="inventory"
-        options={{
-          title: 'Materiales',
-          tabBarIcon: ({ focused }) => <TabIcon name="cube" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="index"
         options={{
           title: 'Inicio',
           tabBarIcon: ({ focused }) => (
             <View style={{
-              width: 112, height: 112, borderRadius: 56,
+              width: 72, height: 72, borderRadius: 20,
               backgroundColor: TAB_BAR_BG,
               borderWidth: 2,
               borderColor: focused ? TAB_ACTIVE : TAB_BORDER,
               alignItems: 'center', justifyContent: 'center',
-              marginBottom: Platform.OS === 'ios' ? 28 : 16,
+              position: 'absolute',
+              bottom: Platform.OS === 'ios' ? 10 : 6,
               shadowColor: TAB_ACTIVE,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: focused ? 0.5 : 0.15,
-              shadowRadius: 8,
-              elevation: 8,
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: focused ? 0.5 : 0.2,
+              shadowRadius: 10,
+              elevation: 12,
             }}>
               <Image
                 source={require('../../assets/images/sunnycolor.png')}
-                style={{ width: 72, height: 72, borderRadius: 16, opacity: focused ? 1 : 0.55 }}
+                style={{ width: 52, height: 52, borderRadius: 13, opacity: focused ? 1 : 0.6 }}
                 resizeMode="contain"
               />
             </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="payroll"
-        options={{
-          title: 'Obreros',
-          tabBarIcon: ({ focused }) => <TabIcon name="people" focused={focused} />,
         }}
       />
       <Tabs.Screen
@@ -116,7 +104,11 @@ export default function AppLayout() {
         }}
       />
       {/* Hidden screens */}
+      <Tabs.Screen name="inventory" options={{ href: null }} />
+      <Tabs.Screen name="payroll" options={{ href: null }} />
       <Tabs.Screen name="onboarding" options={{ href: null }} />
+      <Tabs.Screen name="suppliers" options={{ href: null }} />
+      <Tabs.Screen name="schedule" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -53,4 +53,12 @@ export const queryKeys = {
   payroll: ['payroll'] as const,
   income: ['income'] as const,
   monthlyExpenses: (months: number) => ['monthlyExpenses', months] as const,
+  suppliers: {
+    all: ['suppliers'] as const,
+    detail: (id: string) => ['suppliers', id] as const,
+  },
+  schedule: {
+    all: ['schedule'] as const,
+    detail: (id: string) => ['schedule', id] as const,
+  },
 };

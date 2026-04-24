@@ -215,33 +215,48 @@ export default function DashboardScreen() {
           Acciones rápidas
         </Text>
         <View style={{
-          flexDirection: 'row',
           backgroundColor: C.surface,
           borderRadius: 18,
           paddingVertical: 16,
           paddingHorizontal: 8,
           marginBottom: 24,
         }}>
-          <QuickAction
-            icon="receipt-outline"
-            label="Nuevo gasto"
-            onPress={() => router.push('/(app)/expenses/new')}
-          />
-          <QuickAction
-            icon="people-outline"
-            label="Pagar obrero"
-            onPress={() => router.push('/(app)/payroll/new-payment')}
-          />
-          <QuickAction
-            icon="arrow-down-circle-outline"
-            label="Ingreso"
-            onPress={() => router.push('/(app)/income/new')}
-          />
-          <QuickAction
-            icon="cube-outline"
-            label="Materiales"
-            onPress={() => router.push('/(app)/inventory/')}
-          />
+          {/* Row 1 */}
+          <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+            <QuickAction
+              icon="receipt-outline"
+              label="Nuevo gasto"
+              onPress={() => router.push('/(app)/expenses/new')}
+            />
+            <QuickAction
+              icon="people-outline"
+              label="Pagar obrero"
+              onPress={() => router.push('/(app)/payroll/new-payment')}
+            />
+            <QuickAction
+              icon="arrow-down-circle-outline"
+              label="Ingreso"
+              onPress={() => router.push('/(app)/income/new')}
+            />
+          </View>
+          {/* Row 2 */}
+          <View style={{ flexDirection: 'row' }}>
+            <QuickAction
+              icon="cube-outline"
+              label="Materiales"
+              onPress={() => router.push('/(app)/inventory/')}
+            />
+            <QuickAction
+              icon="business-outline"
+              label="Proveedores"
+              onPress={() => router.push('/(app)/suppliers/')}
+            />
+            <QuickAction
+              icon="calendar-outline"
+              label="Cronograma"
+              onPress={() => router.push('/(app)/schedule/')}
+            />
+          </View>
         </View>
 
         {/* ── Movimientos recientes ── */}
