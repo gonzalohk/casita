@@ -1,3 +1,15 @@
+/**
+ * income/index.tsx  —  Income List Screen
+ *
+ * Displays all income entries for the current project.
+ * Income sources: personal capital, loan, other.
+ * Each row shows source type, description, date and amount.
+ * Entries can be deleted with a confirmation dialog.
+ *
+ * IncomeRow     — renders a single income entry.
+ * SOURCE_LABELS — maps source enum to human-readable Spanish labels.
+ * SOURCE_COLORS — maps source enum to display colors.
+ */
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';

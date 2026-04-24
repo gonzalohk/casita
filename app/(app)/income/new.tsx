@@ -1,3 +1,15 @@
+/**
+ * income/new.tsx  —  New Income Form
+ *
+ * Form to record a new income entry (capital injection).
+ * Fields:
+ *   source       — personal / loan / other (bottom-sheet picker)
+ *   description  — what the money is for (min 3 chars)
+ *   amount       — amount in Bolivianos (must be > 0)
+ *   date         — date received (defaults to today)
+ *   phase_id     — required; project phase this income belongs to
+ *                   auto-selects "Obra Gruesa" on open if available
+ */
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

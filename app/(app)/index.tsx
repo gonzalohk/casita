@@ -1,4 +1,19 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Image } from 'react-native';
+/**
+ * index.tsx  —  Dashboard Screen
+ *
+ * The main home screen of the app. Shows:
+ *   1. Project header with date, name and sign-out button
+ *   2. BalanceCard — current balance, budget progress bar, income/expense/payroll stats
+ *   3. Alert banners — low balance warning or negative balance alert
+ *   4. Phases carousel — horizontal scroll of project phases with per-phase cost summary
+ *   5. Quick actions grid — shortcuts to the most common operations
+ *   6. Recent transactions — last 8 movements (expenses + income)
+ *
+ * BalanceCard — sub-component that renders the financial overview.
+ * QuickAction — sub-component for each grid button.
+ */
+import { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Image, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useBalance } from '@/hooks/useBalance';
@@ -7,6 +22,7 @@ import { useIncome } from '@/hooks/useIncome';
 import { usePhases } from '@/hooks/usePhases';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useUpdateProject } from '@/hooks/useProject';
 import { formatCurrency, formatDate, getPctColor, clamp } from '@/utils/formatters';
 
 // ─── Design tokens ────────────────────────────────────────────
@@ -118,6 +134,23 @@ export default function DashboardScreen() {
   const { data: expenses = [] } = useExpenses();
   const { data: income = [] } = useIncome();
   const { data: phases = [] } = usePhases();
+  const updateProject = useUpdateProject();
+
+  // ── Rename modal state ──
+  const [renameVisible, setRenameVisible] = useState(false);
+  const [renameText, setRenameText] = useState('');
+
+  function openRename() {
+    setRenameText(project?.name ?? '');
+    setRenameVisible(true);
+  }
+
+  async function submitRename() {
+    const name = renameText.trim();
+    if (!name || !project) return;
+    await updateProject.mutateAsync({ id: project.id, name });
+    setRenameVisible(false);
+  }
 
   const recentItems = [
     ...expenses.slice(0, 5).map((e) => ({
@@ -165,9 +198,17 @@ export default function DashboardScreen() {
               <Text style={{ color: C.textMuted, fontSize: 10, letterSpacing: 1.2, fontWeight: '600', textTransform: 'uppercase', marginBottom: 3 }}>
                 {new Date().toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}
               </Text>
-              <Text style={{ color: C.textPrimary, fontSize: 22, fontWeight: '700', letterSpacing: -0.5 }}>
-                {project?.name ?? 'Mi Proyecto'}
-              </Text>
+              {/* Tap the pencil to rename the project */}
+              <TouchableOpacity
+                onPress={openRename}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: C.textPrimary, fontSize: 22, fontWeight: '700', letterSpacing: -0.5 }}>
+                  {project?.name ?? 'Mi Proyecto'}
+                </Text>
+                <Ionicons name="create-outline" size={16} color={C.textMuted} />
+              </TouchableOpacity>
             </View>
           </View>
           <TouchableOpacity
@@ -310,10 +351,24 @@ export default function DashboardScreen() {
               onPress={() => router.push('/(app)/schedule/phases')}
             />
             <QuickAction
+              icon="business-outline"
+              label="Proveedores"
+              onPress={() => router.push('/(app)/suppliers/')}
+            />
+          </View>
+          {/* Row 3 */}
+          <View style={{ flexDirection: 'row' }}>
+            <QuickAction
               icon="calendar-outline"
               label="Cronograma"
               onPress={() => router.push('/(app)/schedule/')}
             />
+            <QuickAction
+              icon="people-outline"
+              label="Planillas"
+              onPress={() => router.push('/(app)/payroll/')}
+            />
+            <View style={{ flex: 1 }} />
           </View>
         </View>
 
@@ -366,6 +421,67 @@ export default function DashboardScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* ── Rename project modal ── */}
+      <Modal visible={renameVisible} transparent animationType="fade" onRequestClose={() => setRenameVisible(false)}>
+        <View style={{
+          flex: 1, justifyContent: 'center', alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.6)',
+        }}>
+          <View style={{
+            backgroundColor: C.surfaceHigh, borderRadius: 20,
+            padding: 24, width: '85%', maxWidth: 380,
+          }}>
+            <Text style={{ color: C.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 6 }}>
+              Renombrar proyecto
+            </Text>
+            <Text style={{ color: C.textSecondary, fontSize: 13, marginBottom: 18 }}>
+              Ingresá el nuevo nombre para tu proyecto.
+            </Text>
+            <TextInput
+              value={renameText}
+              onChangeText={setRenameText}
+              placeholder="Nombre del proyecto"
+              placeholderTextColor={C.textMuted}
+              autoFocus
+              maxLength={80}
+              style={{
+                backgroundColor: C.surface, borderRadius: 12,
+                borderWidth: 1, borderColor: C.border,
+                color: C.textPrimary, fontSize: 16,
+                paddingHorizontal: 14, paddingVertical: 12,
+                marginBottom: 20,
+              }}
+            />
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setRenameVisible(false)}
+                style={{
+                  flex: 1, paddingVertical: 13, borderRadius: 12,
+                  backgroundColor: C.surface,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: C.textSecondary, fontWeight: '600', fontSize: 15 }}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={submitRename}
+                disabled={!renameText.trim() || updateProject.isPending}
+                style={{
+                  flex: 1, paddingVertical: 13, borderRadius: 12,
+                  backgroundColor: renameText.trim() ? C.accent : C.textMuted + '40',
+                  alignItems: 'center',
+                }}
+              >
+                {updateProject.isPending
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Guardar</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

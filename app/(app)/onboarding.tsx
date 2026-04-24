@@ -1,3 +1,20 @@
+/**
+ * onboarding.tsx  —  Project Setup Screen
+ *
+ * Shown once when a new user logs in and has no project yet.
+ * Creates the project and seeds default data in 3 steps:
+ *   1. Insert the project row with name, budget and start date
+ *   2. Create default expense categories (Materiales, Mano de obra, etc.)
+ *   3. Optionally record an initial income entry (starting capital)
+ *
+ * After setup, navigates to the main dashboard.
+ *
+ * Fields:
+ *   name           — project name (default: "Mi Casa")
+ *   description    — optional description
+ *   total_budget   — total budget in Bolivianos (required)
+ *   initial_income — optional opening balance entry
+ */
 import { useState } from 'react';
 import {
   View,

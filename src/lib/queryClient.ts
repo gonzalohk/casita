@@ -1,3 +1,14 @@
+/**
+ * queryClient.ts  —  TanStack Query client and offline persistence
+ *
+ * queryClient   — configured with 5-minute staleTime (reduces Supabase requests
+ *                  in areas with poor connectivity) and 24-hour gcTime for offline.
+ * asyncStoragePersister — persists the query cache to AsyncStorage so the app
+ *                         shows data immediately after launch, even offline.
+ * queryKeys     — centralized key factory. All hooks must use these keys so that
+ *                 invalidateQueries() correctly propagates after mutations.
+ *                 Structure mirrors the Supabase table names.
+ */
 import { QueryClient } from '@tanstack/react-query';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';

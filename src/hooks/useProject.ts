@@ -1,3 +1,16 @@
+/**
+ * useProject.ts
+ * Hook for loading and updating the user's single project.
+ *
+ * On mount it queries the `projects` table for the row matching the
+ * logged-in user. The result is synced into the Zustand projectStore
+ * via a useEffect so all other hooks can read `project` synchronously.
+ *
+ * If no project is found (new user) the AppLayout redirects to /onboarding.
+ *
+ * useProject()       — fetch + sync project to store
+ * useUpdateProject() — PATCH project fields (name, budget, status etc.)
+ */
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';

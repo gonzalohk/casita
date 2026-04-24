@@ -175,6 +175,7 @@ export interface Supplier {
   phone: string | null;
   email: string | null;
   address: string | null;
+  maps_url: string | null;
   category: SupplierCategory;
   notes: string | null;
   status: SupplierStatus;

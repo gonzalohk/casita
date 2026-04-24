@@ -1,3 +1,16 @@
+/**
+ * useSuppliers.ts
+ * CRUD hooks for suppliers (proveedores).
+ *
+ * Suppliers are companies or people who provide materials, services
+ * or equipment for the construction project.
+ *
+ * useSuppliers()       — list all suppliers, alphabetically sorted
+ * useSupplier(id)      — fetch a single supplier by id
+ * useCreateSupplier()  — insert a new supplier
+ * useUpdateSupplier()  — update supplier fields
+ * useDeleteSupplier()  — delete a supplier
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';

@@ -1,3 +1,16 @@
+/**
+ * schedule/index.tsx  —  Schedule List Screen
+ *
+ * Shows all project tasks grouped by phase.
+ * Features:
+ *   - Phase group headers with color dot and task count
+ *   - Per-task card with status badge, progress bar, and date range
+ *   - Header button (🗂) navigates to the phases management screen
+ *   - Floating "+" button to create a new task
+ *
+ * Groups are rendered by iterating over the fetched phases list,
+ * then filtering tasks where task.phase_id === phase.id.
+ */
 import { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,

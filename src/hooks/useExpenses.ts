@@ -1,10 +1,25 @@
+/**
+ * useExpenses.ts
+ * CRUD hooks for expenses and expense categories.
+ *
+ * Expenses are the main cost-tracking entity. Each expense optionally
+ * belongs to a category and a project phase.
+ *
+ * useExpenses(filters?)     — list expenses; supports filtering by
+ *                             category_id, dateFrom, dateTo
+ * useCreateExpense()        — insert a new expense
+ * useUpdateExpense()        — update an existing expense
+ * useDeleteExpense()        — delete an expense
+ * useExpenseCategories()    — list all categories for the project
+ * useCreateExpenseCategory()— insert a new category
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';
 import { Expense, ExpenseInsert, ExpenseUpdate, ExpenseCategory, ExpenseCategoryInsert } from '@/types/database';
 import { useProjectStore } from '@/stores/projectStore';
 
-// ── Expenses ────────────────────────────────────────────────
+// ── Expenses ────────────────────────────────────────────────────────
 
 interface ExpenseFilters {
   category_id?: string;

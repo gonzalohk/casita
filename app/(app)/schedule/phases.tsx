@@ -1,3 +1,20 @@
+/**
+ * schedule/phases.tsx  —  Project Phases Management Screen
+ *
+ * Lists all project phases and shows per-phase financial summary:
+ *   - Total income attributed to the phase
+ *   - Total expenses attributed to the phase
+ *   - Balance (income − expenses)
+ *   - Number of materials linked to the phase
+ *
+ * A footer shows the overall project totals.
+ * The user can create new phases with a "+" button.
+ * Tapping a phase opens an edit modal (rename, change color).
+ *
+ * Color picker: 8 preset colors to assign to each phase.
+ * Financial data is derived by filtering the cached income/expense/material
+ * lists by phase_id — no extra Supabase queries needed.
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,

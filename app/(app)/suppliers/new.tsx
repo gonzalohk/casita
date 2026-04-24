@@ -1,3 +1,17 @@
+/**
+ * suppliers/new.tsx  —  New Supplier Form
+ *
+ * Form to register a new supplier.
+ * Fields:
+ *   name     — supplier name (min 2 chars)
+ *   category — materials / services / equipment / other (bottom-sheet picker)
+ *   phone    — optional phone number
+ *   email    — optional email (validated format)
+ *   address  — optional physical address
+ *   notes    — optional free-text notes
+ *
+ * Suppliers start with status = 'active' by default.
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
@@ -17,6 +31,7 @@ const supplierSchema = z.object({
   phone:    z.string().optional(),
   email:    z.string().email('Email inválido').optional().or(z.literal('')),
   address:  z.string().optional(),
+  maps_url: z.string().url('URL inválida').optional().or(z.literal('')),
   category: z.enum(['materials', 'services', 'equipment', 'other']),
   notes:    z.string().optional(),
 });
@@ -48,7 +63,7 @@ export default function NewSupplierScreen() {
   const { control, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<SupplierForm>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: '', phone: '', email: '', address: '', category: 'materials', notes: '',
+      name: '', phone: '', email: '', address: '', maps_url: '', category: 'materials', notes: '',
     },
   });
 
@@ -64,6 +79,7 @@ export default function NewSupplierScreen() {
         phone:    data.phone?.trim() || null,
         email:    data.email?.trim() || null,
         address:  data.address?.trim() || null,
+        maps_url: data.maps_url?.trim() || null,
         category: data.category,
         notes:    data.notes?.trim() || null,
         status:   'active',
@@ -199,6 +215,27 @@ export default function NewSupplierScreen() {
               />
             )}
           />
+
+          {/* Google Maps URL */}
+          <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>
+            ENLACE GOOGLE MAPS
+          </Text>
+          <Controller
+            control={control}
+            name="maps_url"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                placeholder="https://maps.app.goo.gl/..."
+                placeholderTextColor={C.muted}
+                autoCapitalize="none"
+                keyboardType="url"
+                style={[fieldBorder(!!errors.maps_url), { marginBottom: errors.maps_url ? 4 : 24 }]}
+              />
+            )}
+          />
+          {errors.maps_url && <Text style={{ color: C.error, fontSize: 12, marginBottom: 16 }}>{errors.maps_url.message}</Text>}
 
           {/* Notas */}
           <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>

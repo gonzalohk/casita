@@ -1,3 +1,19 @@
+/**
+ * useIncome.ts
+ * CRUD hooks for income entries (ingresos).
+ *
+ * Income represents money received for the project, such as:
+ *   - Personal capital injection ("personal")
+ *   - Bank or private loan ("loan")
+ *   - Other sources ("other")
+ *
+ * Each entry optionally belongs to a project phase via phase_id,
+ * so income can be tracked per construction phase.
+ *
+ * useIncome()       — list all income entries, newest first
+ * useCreateIncome() — insert a new income entry
+ * useDeleteIncome() — soft-delete an income entry by id
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';

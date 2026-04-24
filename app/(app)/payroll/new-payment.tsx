@@ -1,3 +1,19 @@
+/**
+ * payroll/new-payment.tsx  —  New Payment Form
+ *
+ * Records a salary payment for a worker.
+ * Fields:
+ *   worker_id    — required; chosen from a list of active workers
+ *   amount       — total amount paid in Bolivianos
+ *   days_worked  — number of days worked in the period
+ *   period_start — start of work period (ISO date)
+ *   period_end   — end of work period (ISO date)
+ *   date_paid    — date money was handed over
+ *   notes        — optional notes
+ *
+ * When a worker is selected, auto-calculates amount from days_worked * daily_rate.
+ * The user can override the calculated amount.
+ */
 import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

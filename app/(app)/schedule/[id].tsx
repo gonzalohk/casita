@@ -1,3 +1,14 @@
+/**
+ * schedule/[id].tsx  —  Schedule Task Detail / Edit Screen
+ *
+ * Loads a single schedule task by id and allows full editing.
+ * Fields: title, phase, status, progress, start_date, end_date, description.
+ * Also has a delete button (with confirmation dialog).
+ *
+ * Phase selection uses the DB phases list (color dots shown).
+ * Status selection shows human-readable labels with colored badges.
+ * Progress is a numeric input (0-100) that syncs with the status picker.
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

@@ -1,7 +1,16 @@
+/**
+ * suppliers/[id].tsx  —  Supplier Detail / Edit Screen
+ *
+ * Loads a single supplier by id and allows editing all fields.
+ * Also has an Active/Inactive status toggle and a delete button.
+ * Same form fields as suppliers/new.tsx.
+ *
+ * Uses useLocalSearchParams to get the supplier id from the URL.
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  KeyboardAvoidingView, Platform, Alert, Modal, ActivityIndicator,
+  KeyboardAvoidingView, Platform, Alert, Modal, ActivityIndicator, Linking,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -16,6 +25,7 @@ const supplierSchema = z.object({
   phone:    z.string().optional(),
   email:    z.string().email('Email inválido').optional().or(z.literal('')),
   address:  z.string().optional(),
+  maps_url: z.string().url('URL inválida').optional().or(z.literal('')),
   category: z.enum(['materials', 'services', 'equipment', 'other']),
   notes:    z.string().optional(),
   status:   z.enum(['active', 'inactive']),
@@ -55,6 +65,7 @@ export default function SupplierDetailScreen() {
       phone:    supplier.phone ?? '',
       email:    supplier.email ?? '',
       address:  supplier.address ?? '',
+      maps_url: supplier.maps_url ?? '',
       category: supplier.category,
       notes:    supplier.notes ?? '',
       status:   supplier.status,
@@ -74,6 +85,7 @@ export default function SupplierDetailScreen() {
         phone:    data.phone?.trim() || null,
         email:    data.email?.trim() || null,
         address:  data.address?.trim() || null,
+        maps_url: data.maps_url?.trim() || null,
         category: data.category,
         notes:    data.notes?.trim() || null,
         status:   data.status,
@@ -263,6 +275,25 @@ export default function SupplierDetailScreen() {
               />
             )}
           />
+
+          {/* Google Maps URL */}
+          <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>ENLACE GOOGLE MAPS</Text>
+          <Controller
+            control={control}
+            name="maps_url"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                value={value}
+                onChangeText={onChange}
+                placeholder="https://maps.app.goo.gl/..."
+                placeholderTextColor={C.muted}
+                autoCapitalize="none"
+                keyboardType="url"
+                style={[fieldBorder(!!errors.maps_url), { marginBottom: errors.maps_url ? 4 : 24 }]}
+              />
+            )}
+          />
+          {errors.maps_url && <Text style={{ color: C.error, fontSize: 12, marginBottom: 16 }}>{errors.maps_url.message}</Text>}
 
           {/* Notas */}
           <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, fontWeight: '600', marginBottom: 4 }}>NOTAS</Text>

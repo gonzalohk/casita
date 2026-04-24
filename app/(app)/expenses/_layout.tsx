@@ -1,3 +1,8 @@
+/**
+ * expenses/_layout.tsx  —  Expenses Group Layout
+ * Stack navigator for expense screens (no visible header).
+ * Screens: index (expense list), new (create), [id] (detail).
+ */
 import { Stack } from 'expo-router';
 
 export default function ExpensesLayout() {

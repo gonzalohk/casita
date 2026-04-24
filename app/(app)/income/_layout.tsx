@@ -1,3 +1,8 @@
+/**
+ * income/_layout.tsx  —  Income Group Layout
+ * Stack navigator for income screens (no visible header).
+ * Screens: index (income list), new (create income entry).
+ */
 import { Stack } from 'expo-router';
 
 export default function IncomeLayout() {

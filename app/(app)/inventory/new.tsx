@@ -1,3 +1,16 @@
+/**
+ * inventory/new.tsx  —  New Material Form
+ *
+ * Form to add a new material to the inventory.
+ * Fields:
+ *   name          — material name (min 2 chars)
+ *   category      — free-text or choose from common list
+ *   unit          — unit of measure (bolsa, kg, m², etc.)
+ *   stock_current — current stock on hand (>= 0)
+ *   stock_min     — minimum stock threshold for low-stock alert
+ *   phase_id      — required; project phase this material belongs to
+ *                   auto-selects "Obra Gruesa" on open if available
+ */
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

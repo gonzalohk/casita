@@ -1,3 +1,16 @@
+/**
+ * schedule/new.tsx  —  New Schedule Task Form
+ *
+ * Form to create a new task in the project timeline.
+ * Fields:
+ *   title       — task name (min 3 chars)
+ *   phase_id    — required; which project phase this task belongs to
+ *   status      — pending | in_progress | completed | delayed
+ *   progress    — 0-100 completion percentage
+ *   start_date  — ISO date (defaults to today)
+ *   end_date    — ISO date (must be >= start_date)
+ *   description — optional notes
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

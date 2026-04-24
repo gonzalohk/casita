@@ -1,5 +1,13 @@
+/**
+ * inventory/[id].tsx  —  Material Detail / Edit Screen
+ *
+ * Shows full details for a single material and allows editing all fields.
+ * Also shows stock movement history (adjustments log).
+ * The user can manually adjust stock with the +/- controls or
+ * enter a custom delta.
+ * Deleting a material navigates back to the inventory list.
+ */
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';

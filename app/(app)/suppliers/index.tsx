@@ -1,7 +1,20 @@
+/**
+ * suppliers/index.tsx  —  Suppliers List Screen
+ *
+ * Lists all suppliers (proveedores) for the project.
+ * Features:
+ *   - Search by name
+ *   - Category filter chips: All / Materials / Services / Equipment / Other
+ *   - Each card shows name, category icon, phone and address
+ *   - Long-press or trash button to delete with confirmation
+ *
+ * CATEGORY_META maps each SupplierCategory enum value to a
+ * human-readable label, icon name and color.
+ */
 import { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  ActivityIndicator, TextInput, Alert,
+  ActivityIndicator, TextInput, Alert, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -80,6 +93,17 @@ function SupplierCard({ supplier, onPress, onDelete }: {
           <Text style={{ color: C.textMuted, fontSize: 12, marginTop: 1 }} numberOfLines={1}>
             {supplier.address}
           </Text>
+        ) : null}
+        {/* Maps link button */}
+        {supplier.maps_url ? (
+          <TouchableOpacity
+            onPress={() => Linking.openURL(supplier.maps_url!)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          >
+            <Ionicons name="map-outline" size={13} color={C.accent} />
+            <Text style={{ color: C.accent, fontSize: 12, fontWeight: '500' }}>Ver en Maps</Text>
+          </TouchableOpacity>
         ) : null}
       </View>
 

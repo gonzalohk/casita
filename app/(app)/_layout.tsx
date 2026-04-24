@@ -1,13 +1,31 @@
+/**
+ * (app)/_layout.tsx  —  Main App Layout (Tab Navigator)
+ *
+ * Bottom tab bar with 3 visible tabs:
+ *   - Gastos (expenses)  — left
+ *   - Inicio (dashboard) — center, larger "floating" button with project logo
+ *   - Ingresos (income)  — right
+ *
+ * All other screens (inventory, payroll, suppliers, schedule, etc.) are
+ * accessible via navigation but hidden from the tab bar (href: null).
+ *
+ * On mount it loads the user's project via useProject().
+ * If no project exists (first login), redirects to the onboarding screen.
+ *
+ * TabIcon — renders a filled icon when focused, outline when not.
+ *            Also shows a small blue dot below the icon when active.
+ */
 import { useEffect } from 'react';
 import { Tabs, router } from 'expo-router';
 import { View, Text, ActivityIndicator, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useProject } from '@/hooks/useProject';
 
-const TAB_BAR_BG = '#12141c';
-const TAB_ACTIVE = '#4f7bff';
-const TAB_INACTIVE = '#3e4468';
-const TAB_BORDER = '#2c3050';
+// Tab bar design tokens
+const TAB_BAR_BG = '#12141c';  // dark background
+const TAB_ACTIVE = '#4f7bff';  // blue accent
+const TAB_INACTIVE = '#3e4468'; // muted blue-grey
+const TAB_BORDER = '#2c3050';   // subtle separator line
 
 function TabIcon({ name, focused }: { name: keyof typeof Ionicons.glyphMap; focused: boolean }) {
   return (

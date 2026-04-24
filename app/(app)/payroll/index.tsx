@@ -1,3 +1,14 @@
+/**
+ * payroll/index.tsx  —  Payroll / Workers List Screen
+ *
+ * Lists all registered workers for the project.
+ * Features:
+ *   - Active/Inactive toggle per worker (tapping the status badge)
+ *   - Total monthly payroll estimate shown at top
+ *   - Tap worker card to see payment history ([workerId].tsx)
+ *   - Quick "+ Pago" button to record a new payment for that worker
+ *   - Floating "+" button to add a new worker
+ */
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';

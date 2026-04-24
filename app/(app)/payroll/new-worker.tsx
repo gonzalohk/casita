@@ -1,3 +1,15 @@
+/**
+ * payroll/new-worker.tsx  —  New Worker Form
+ *
+ * Registers a new construction worker on the project.
+ * Fields:
+ *   name       — worker's full name (min 2 chars)
+ *   role       — job title; free-text or pick from COMMON_ROLES list
+ *   daily_rate — pay per day in Bolivianos
+ *   phone      — optional phone number
+ *
+ * Workers start with status = 'active' by default.
+ */
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

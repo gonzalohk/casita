@@ -1,3 +1,18 @@
+/**
+ * usePhases.ts
+ * CRUD hooks for project phases (fases de obra).
+ *
+ * Phases are the top-level grouping entity for the project.
+ * Examples: "Obra Gruesa", "Obra Fina", "Terminaciones".
+ *
+ * Expenses, income entries, materials, and schedule tasks all have an
+ * optional phase_id foreign key so costs can be tracked per phase.
+ *
+ * usePhases()       — list all phases for the current project, ordered by sort_order
+ * useCreatePhase()  — insert a new phase
+ * useUpdatePhase()  — update name/color of an existing phase
+ * useDeletePhase()  — delete a phase (tasks become unphased, not deleted)
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';

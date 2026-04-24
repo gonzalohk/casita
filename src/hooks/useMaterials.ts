@@ -1,3 +1,22 @@
+/**
+ * useMaterials.ts
+ * CRUD hooks for construction materials (inventory) and stock movements.
+ *
+ * Materials track name, category, unit, current stock and minimum stock.
+ * When stock_current falls to or below stock_min, the UI shows a low-stock warning.
+ *
+ * Stock movements record each +/- adjustment with a timestamp and reason,
+ * providing a full history of inventory changes.
+ *
+ * Each material optionally belongs to a project phase via phase_id.
+ *
+ * useMaterials()       — list all materials for the project
+ * useCreateMaterial()  — add a new material
+ * useUpdateMaterial()  — update material fields
+ * useDeleteMaterial()  — remove a material
+ * useAdjustStock()     — record a stock adjustment (+/-)
+ * useStockMovements()  — list all stock movements for a given material
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';

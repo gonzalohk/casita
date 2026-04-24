@@ -1,5 +1,22 @@
+/**
+ * expenses/index.tsx  —  Expenses List Screen
+ *
+ * Displays all expenses for the current project.
+ * Features:
+ *   - Total shown (sum of filtered results)
+ *   - Search bar for text filtering by description
+ *   - Category dropdown filter (defaults to "All")
+ *   - Swipe-to-delete (via trash icon) with confirmation dialog
+ *
+ * ExpenseRow  — renders a single expense with category icon, description,
+ *               date, amount and a delete button.
+ * confirmDelete — uses Alert on native and window.confirm on web.
+ */
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform, Modal } from 'react-native';
+import {
+  View, Text, FlatList, TouchableOpacity, TextInput,
+  ActivityIndicator, Alert, Platform, Modal,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useExpenses, useDeleteExpense, useExpenseCategories } from '@/hooks/useExpenses';

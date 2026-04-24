@@ -1,3 +1,14 @@
+/**
+ * login.tsx  —  Login Screen
+ *
+ * Allows existing users to sign in with email + password via Supabase Auth.
+ * On success, AuthGuard in _layout.tsx automatically navigates to the app.
+ * On error, shows a localized alert message.
+ *
+ * Validation:
+ *   - email: must be a valid email address
+ *   - password: minimum 6 characters
+ */
 import { useState } from 'react';
 import {
   View,

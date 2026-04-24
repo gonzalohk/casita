@@ -1,13 +1,24 @@
+/**
+ * supabase.ts
+ * Initializes and exports the Supabase client used throughout the app.
+ *
+ * - On native (iOS/Android) it uses expo-secure-store to persist the auth
+ *   session securely in the device keychain.
+ * - On web it falls back to localStorage, with a guard for SSR environments
+ *   where localStorage is not available.
+ */
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// ─── Secure storage adapter for Supabase Auth ────────────────
-// Uses expo-secure-store on native, localStorage on web.
-// Guards against SSR (localStorage undefined during server-side rendering).
+// Check if localStorage is available (web only, not during SSR)
 const canUseLocalStorage = Platform.OS === 'web' && typeof localStorage !== 'undefined';
 
+/**
+ * Custom storage adapter that bridges Supabase Auth with the correct
+ * storage mechanism for each platform.
+ */
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
     if (Platform.OS === 'web') {

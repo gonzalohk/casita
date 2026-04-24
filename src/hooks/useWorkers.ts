@@ -1,10 +1,24 @@
+/**
+ * useWorkers.ts
+ * CRUD hooks for workers (obreros) and payroll entries.
+ *
+ * Workers have a daily_rate and a status (active/inactive).
+ * Payroll entries record a payment for a specific date range.
+ *
+ * useWorkers()            — list all workers, active first
+ * useCreateWorker()       — add a worker
+ * useUpdateWorker()       — update worker fields (role, rate, status)
+ * usePayrollByWorker(id)  — list payment history for one worker
+ * usePayroll()            — list all payroll entries for the project
+ * useCreatePayroll()      — record a new payment
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';
 import { Worker, WorkerInsert, WorkerUpdate, PayrollEntry, PayrollEntryInsert } from '@/types/database';
 import { useProjectStore } from '@/stores/projectStore';
 
-// ── Workers ──────────────────────────────────────────────────
+// ── Workers ────────────────────────────────────────────────────────
 
 export function useWorkers() {
   const { project } = useProjectStore();

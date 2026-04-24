@@ -1,3 +1,21 @@
+/**
+ * useSchedule.ts
+ * CRUD hooks for schedule tasks (tareas del cronograma).
+ *
+ * Each task belongs to a project phase (phase_id) and has:
+ *   - start_date / end_date  (ISO date strings)
+ *   - status: pending | in_progress | completed | delayed
+ *   - progress: 0-100 percentage
+ *
+ * The list query joins project_phases so the task card can show
+ * the phase color/name without an extra request.
+ *
+ * useScheduleTasks()       — list all tasks, ordered by start_date
+ * useScheduleTask(id)      — fetch a single task by id
+ * useCreateScheduleTask()  — insert a new task
+ * useUpdateScheduleTask()  — update status/progress/dates etc.
+ * useDeleteScheduleTask()  — delete a task
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from '@/lib/queryClient';

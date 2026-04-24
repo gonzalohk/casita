@@ -1,3 +1,18 @@
+/**
+ * expenses/new.tsx  —  New Expense Form
+ *
+ * Form to create a new expense entry.
+ * Fields:
+ *   description  — what was purchased (min 3 chars)
+ *   amount       — cost in Bolivianos (must be > 0)
+ *   category_id  — required; chosen from a bottom-sheet modal
+ *   date         — date of purchase (defaults to today)
+ *   phase_id     — required; project phase this cost belongs to
+ *                   auto-selects "Obra Gruesa" on open if available
+ *
+ * Validation is handled by zod + react-hook-form.
+ * On submit, inserts the expense and navigates back.
+ */
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,

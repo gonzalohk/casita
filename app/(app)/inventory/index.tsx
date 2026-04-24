@@ -1,3 +1,17 @@
+/**
+ * inventory/index.tsx  —  Inventory (Materials) List Screen
+ *
+ * Lists all construction materials for the project.
+ * Features:
+ *   - Search by name
+ *   - Inline +/- stock adjustment buttons (adjusts by 1 unit)
+ *   - Low-stock indicator: red left border when stock_current <= stock_min
+ *   - Tap row to open the detail/edit screen
+ *   - Delete with confirmation
+ *
+ * MaterialRow  — renders a single material card with stock controls.
+ * confirmDelete — cross-platform delete confirmation.
+ */
 import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

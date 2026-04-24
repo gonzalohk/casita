@@ -1,3 +1,12 @@
+/**
+ * expenses/[id].tsx  —  Expense Detail Screen
+ *
+ * Shows the full details of a single expense entry.
+ * Reads the expense from the cached list (no extra query needed).
+ * Displays category, amount, date and description.
+ *
+ * Uses useLocalSearchParams to get the expense id from the URL.
+ */
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';

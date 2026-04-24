@@ -1,3 +1,16 @@
+/**
+ * register.tsx  —  Registration Screen
+ *
+ * Allows new users to create an account with email + password.
+ * Uses Supabase Auth `signUp`.
+ * On success, shows a confirmation banner (inline, not Alert.alert for web compat).
+ * After email confirmation the user can log in and will be redirected to onboarding.
+ *
+ * Validation:
+ *   - email: valid email format
+ *   - password: minimum 6 characters
+ *   - confirmPassword: must match password
+ */
 import { useState } from 'react';
 import {
   View,
