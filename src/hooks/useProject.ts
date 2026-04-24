@@ -1,0 +1,61 @@
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/authStore';
+import { useProjectStore } from '@/stores/projectStore';
+import { queryKeys } from '@/lib/queryClient';
+import { Project, ProjectInsert, ProjectUpdate } from '@/types/database';
+
+/**
+ * Fetches the authenticated user's single project.
+ * Redirects to onboarding if none found (handled in AppLayout).
+ */
+export function useProject() {
+  const { user } = useAuthStore();
+  const { setProject } = useProjectStore();
+
+  const query = useQuery({
+    queryKey: queryKeys.project,
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return (data as Project) ?? null;
+    },
+    enabled: !!user,
+  });
+
+  // Sync fetched project to the Zustand store outside of queryFn
+  useEffect(() => {
+    if (query.data !== undefined) {
+      setProject(query.data);
+    }
+  }, [query.data, setProject]);
+
+  return query;
+}
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (update: ProjectUpdate & { id: string }) => {
+      const { id, ...rest } = update;
+      const { data, error } = await supabase
+        .from('projects')
+        .update(rest)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Project;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.project });
+    },
+  });
+}
