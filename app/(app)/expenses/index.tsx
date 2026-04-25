@@ -59,7 +59,7 @@ function ExpenseRow({ item, onDelete }: { item: Expense; onDelete: (id: string) 
 
       {/* Info */}
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#f0f0ff', fontSize: 15, fontWeight: '500' }} numberOfLines={1}>
+        <Text style={{ color: '#f0f0ff', fontSize: 15, fontWeight: '500' }}>
           {item.description}
         </Text>
         <Text style={{ color: '#8888aa', fontSize: 12, marginTop: 2 }}>
@@ -84,7 +84,7 @@ function ExpenseRow({ item, onDelete }: { item: Expense; onDelete: (id: string) 
 }
 
 export default function ExpensesScreen() {
-  const [search, setSearch] = useState('');
+
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
@@ -92,18 +92,19 @@ export default function ExpensesScreen() {
   const { data: categories = [] } = useExpenseCategories();
   const deleteExpense = useDeleteExpense();
 
-  const filtered = expenses.filter((e) =>
-    e.description.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0);
+  const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0f1a' }}>
       {/* Header */}
       <View style={{ padding: 20, paddingTop: 60 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <Text style={{ color: '#f0f0ff', fontSize: 26, fontWeight: '700' }}>Gastos</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color="#8888aa" />
+            </TouchableOpacity>
+            <Text style={{ color: '#f0f0ff', fontSize: 26, fontWeight: '700' }}>Gastos</Text>
+          </View>
           <TouchableOpacity
             style={{ backgroundColor: '#4f7bff', borderRadius: 10, padding: 10 }}
             onPress={() => router.push('/(app)/expenses/new')}
@@ -118,25 +119,6 @@ export default function ExpensesScreen() {
           <Text style={{ color: '#f07070', fontSize: 32, fontWeight: '800', marginTop: 4, letterSpacing: -0.5 }}>
             -{formatCurrency(total)}
           </Text>
-        </View>
-
-        {/* Search */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#1c1c2e',
-          borderRadius: 12,
-          paddingHorizontal: 14,
-          marginBottom: 12,
-        }}>
-          <Ionicons name="search" size={18} color="#606080" />
-          <TextInput
-            style={{ flex: 1, color: '#f0f0ff', paddingVertical: 12, paddingHorizontal: 10, fontSize: 15 }}
-            placeholder="Buscar gasto..."
-            placeholderTextColor="#8888aa"
-            value={search}
-            onChangeText={setSearch}
-          />
         </View>
 
         {/* Category filter dropdown */}
@@ -171,7 +153,7 @@ export default function ExpensesScreen() {
         <ActivityIndicator style={{ marginTop: 40 }} color="#3b82f6" />
       ) : (
         <FlatList
-          data={filtered}
+          data={expenses}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20, paddingTop: 0, paddingBottom: 100 }}
           renderItem={({ item }) => (
@@ -250,6 +232,23 @@ export default function ExpensesScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Home FAB — centrado abajo */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        activeOpacity={0.85}
+        style={{
+          position: 'absolute', bottom: 32, alignSelf: 'center',
+          backgroundColor: '#1a1d27', borderRadius: 50,
+          width: 56, height: 56,
+          justifyContent: 'center', alignItems: 'center',
+          borderWidth: 1.5, borderColor: '#2c3050',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4, shadowRadius: 8, elevation: 10,
+        }}
+      >
+        <Ionicons name="home-outline" size={24} color="#8888aa" />
+      </TouchableOpacity>
     </View>
   );
 }

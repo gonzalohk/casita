@@ -12,8 +12,7 @@
  * MaterialRow  — renders a single material card with stock controls.
  * confirmDelete — cross-platform delete confirmation.
  */
-import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMaterials, useDeleteMaterial, useAdjustStock } from '@/hooks/useMaterials';
@@ -116,23 +115,23 @@ function MaterialRow({
 }
 
 export default function InventoryScreen() {
-  const [search, setSearch] = useState('');
   const { data: materials = [], isLoading, refetch } = useMaterials();
   const deleteMaterial = useDeleteMaterial();
   const adjustStock = useAdjustStock();
 
   const lowStock = materials.filter((m) => m.stock_current <= m.stock_min);
-  const filtered = materials.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.category.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0f1a' }}>
       {/* Header */}
       <View style={{ padding: 20, paddingTop: 60 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <Text style={{ color: '#f0f0ff', fontSize: 24, fontWeight: '700' }}>Materiales</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color="#8888aa" />
+            </TouchableOpacity>
+            <Text style={{ color: '#f0f0ff', fontSize: 24, fontWeight: '700' }}>Materiales</Text>
+          </View>
           <TouchableOpacity
             style={{ backgroundColor: '#4f7bff', borderRadius: 12, padding: 10 }}
             onPress={() => router.push('/(app)/inventory/new')}
@@ -172,20 +171,6 @@ export default function InventoryScreen() {
           </View>
         </View>
 
-        {/* Search */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          backgroundColor: '#1c1c2e', borderRadius: 12, paddingHorizontal: 14,
-        }}>
-          <Ionicons name="search" size={18} color="#606080" />
-          <TextInput
-            style={{ flex: 1, color: '#f0f0ff', paddingVertical: 12, paddingHorizontal: 10, fontSize: 15 }}
-            placeholder="Buscar material..."
-            placeholderTextColor="#8888aa"
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
       </View>
 
       {/* List */}
@@ -193,7 +178,7 @@ export default function InventoryScreen() {
         <ActivityIndicator style={{ marginTop: 40 }} color="#3b82f6" />
       ) : (
         <FlatList
-          data={filtered}
+          data={materials}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ padding: 20, paddingTop: 12, paddingBottom: 100 }}
           renderItem={({ item }) => (
@@ -219,6 +204,23 @@ export default function InventoryScreen() {
           refreshing={isLoading}
         />
       )}
+
+      {/* Home FAB */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        activeOpacity={0.85}
+        style={{
+          position: 'absolute', bottom: 32, alignSelf: 'center',
+          backgroundColor: '#1a1d2e', borderRadius: 50,
+          width: 56, height: 56,
+          justifyContent: 'center', alignItems: 'center',
+          borderWidth: 1.5, borderColor: '#2c3050',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4, shadowRadius: 8, elevation: 10,
+        }}
+      >
+        <Ionicons name="home-outline" size={24} color="#8888aa" />
+      </TouchableOpacity>
     </View>
   );
 }

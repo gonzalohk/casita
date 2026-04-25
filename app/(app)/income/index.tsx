@@ -54,7 +54,7 @@ function IncomeRow({ item, onDelete }: { item: IncomeEntry; onDelete: () => void
         <Ionicons name="arrow-down" size={20} color={color} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#f0f0ff', fontSize: 15, fontWeight: '500' }} numberOfLines={1}>
+        <Text style={{ color: '#f0f0ff', fontSize: 15, fontWeight: '500' }}>
           {item.description}
         </Text>
         <Text style={{ color: '#8888aa', fontSize: 12, marginTop: 2 }}>
@@ -87,7 +87,12 @@ export default function IncomeScreen() {
       {/* Header */}
       <View style={{ padding: 20, paddingTop: 60 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <Text style={{ color: '#f0f0ff', fontSize: 26, fontWeight: '700' }}>Ingresos</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+              <Ionicons name="arrow-back" size={22} color="#8888aa" />
+            </TouchableOpacity>
+            <Text style={{ color: '#f0f0ff', fontSize: 26, fontWeight: '700' }}>Ingresos</Text>
+          </View>
           <TouchableOpacity
             style={{ backgroundColor: '#34d399', borderRadius: 10, padding: 10 }}
             onPress={() => router.push('/(app)/income/new')}
@@ -135,6 +140,23 @@ export default function IncomeScreen() {
           refreshing={isLoading}
         />
       )}
+
+      {/* Home FAB — centrado abajo */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        activeOpacity={0.85}
+        style={{
+          position: 'absolute', bottom: 32, alignSelf: 'center',
+          backgroundColor: '#1a1d27', borderRadius: 50,
+          width: 56, height: 56,
+          justifyContent: 'center', alignItems: 'center',
+          borderWidth: 1.5, borderColor: '#2c3050',
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.4, shadowRadius: 8, elevation: 10,
+        }}
+      >
+        <Ionicons name="home-outline" size={24} color="#8888aa" />
+      </TouchableOpacity>
     </View>
   );
 }

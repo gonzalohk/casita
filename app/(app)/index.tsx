@@ -1,19 +1,17 @@
 /**
- * index.tsx  —  Dashboard Screen
+ * index.tsx  —  Dashboard Screen (redesigned)
  *
- * The main home screen of the app. Shows:
- *   1. Project header with date, name and sign-out button
- *   2. BalanceCard — current balance, budget progress bar, income/expense/payroll stats
- *   3. Alert banners — low balance warning or negative balance alert
- *   4. Phases carousel — horizontal scroll of project phases with per-phase cost summary
- *   5. Quick actions grid — shortcuts to the most common operations
- *   6. Recent transactions — last 8 movements (expenses + income)
- *
- * BalanceCard — sub-component that renders the financial overview.
- * QuickAction — sub-component for each grid button.
+ * Layout (top → bottom):
+ *   1. Header — project name (editable) + sign-out
+ *   2. BalanceWidget — compact saldo + % badge + progress bar + 3 stat pills
+ *   3. Smart alert — shown only when burn rate < 15 days / negative balance
+ *   4. Phase carousel — cards with visual spend progress bar
+ *   5. Secondary actions grid — Materiales, Fases, Proveedores, Cronograma, Planillas
+ *   6. Recent transactions
+ *   7. Primary FAB row (pinned bottom) — Nuevo gasto | Ingreso | Pagar obrero
  */
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Image, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { useState, useMemo, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useBalance } from '@/hooks/useBalance';
@@ -23,86 +21,63 @@ import { usePhases } from '@/hooks/usePhases';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUpdateProject } from '@/hooks/useProject';
-import { formatCurrency, formatDate, getPctColor, clamp } from '@/utils/formatters';
+import { formatCurrency, formatDate, clamp } from '@/utils/formatters';
 
-// ─── Design tokens ────────────────────────────────────────────
+// ─── Design tokens ─────────────────────────────────────────────────────────
 const C = {
-  bg: '#0b0e14',
-  surface: '#151921',
-  surfaceHigh: '#1d2233',
+  bg: '#080b11',
+  surface: '#111520',
+  surfaceHigh: '#1a1f2e',
   border: '#1e2535',
-  textPrimary: '#eef0f8',
-  textSecondary: '#8a94a6',
-  textMuted: '#4a5268',
+  textPrimary: '#f0f2fa',
+  textSecondary: '#9aa3ba',
+  textMuted: '#6b7591',
   accent: '#4f7bff',
   green: '#2dd68a',
-  red: '#d97070',
-  amber: '#c98a3e',
+  greenSoft: '#2dd68a18',
+  red: '#e06060',
+  redSoft: '#e0606018',
+  amber: '#d4913a',
+  amberSoft: '#d4913a18',
+  purple: '#a05ceb',
 };
 
-function BalanceCard({ total_income, total_expenses, total_payroll, balance, budget, budget_used_pct }: {
-  total_income: number;
-  total_expenses: number;
-  total_payroll: number;
-  balance: number;
-  budget: number;
-  budget_used_pct: number;
+// ─── Balance widget ─────────────────────────────────────────────────────────
+function BalanceWidget({ total_income, total_expenses, total_payroll, balance, budget, budget_used_pct }: {
+  total_income: number; total_expenses: number; total_payroll: number;
+  balance: number; budget: number; budget_used_pct: number;
 }) {
-  const pct = clamp(budget_used_pct, 0, 100);
-  const barColor = getPctColor(pct);
-
+  const pct = Math.min(Math.max(budget_used_pct, 0), 100);
+  const barColor = pct < 60 ? C.green : pct < 85 ? C.amber : C.red;
+  const totalSpent = total_expenses + total_payroll;
   return (
-    <View style={{
-      backgroundColor: C.surface,
-      borderRadius: 20,
-      padding: 22,
-      marginBottom: 24,
-    }}>
-      {/* Saldo */}
-      <Text style={{ color: C.textMuted, fontSize: 11, letterSpacing: 0.5, fontWeight: '500', marginBottom: 6, textAlign: 'center' }}>
-        Saldo disponible
-      </Text>
-      <Text style={{ color: C.accent, fontSize: 34, fontWeight: '800', letterSpacing: -1, marginBottom: 22, textAlign: 'center' }}>
-        {formatCurrency(balance)}
-      </Text>
-
-      {/* Barra de presupuesto */}
-      <View style={{ marginBottom: 4 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-          <Text style={{ color: C.textSecondary, fontSize: 11 }}>Presupuesto ejecutado</Text>
-          <Text style={{ color: barColor, fontSize: 11, fontWeight: '700' }}>{pct.toFixed(1)}%</Text>
+    <View style={{ backgroundColor: C.surfaceHigh, borderRadius: 22, padding: 20, marginBottom: 20, borderWidth: 1.5, borderColor: C.accent + '30' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 16 }}>
+        <View>
+          <Text style={{ color: C.textMuted, fontSize: 10, letterSpacing: 1.4, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Saldo disponible</Text>
+          <Text style={{ color: balance >= 0 ? C.textPrimary : C.red, fontSize: 32, fontWeight: '800', letterSpacing: -1.5 }}>{formatCurrency(balance)}</Text>
         </View>
-        <View style={{ height: 7, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden' }}>
-          <View style={{ width: `${pct}%`, height: '100%', backgroundColor: barColor, borderRadius: 99 }} />
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-          <Text style={{ color: C.textMuted, fontSize: 10 }}>
-            Usado: {formatCurrency(total_expenses + total_payroll)}
-          </Text>
-          <Text style={{ color: C.textMuted, fontSize: 10 }}>
-            Presup: {formatCurrency(budget)}
-          </Text>
+        <View style={{ backgroundColor: barColor + '18', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, alignItems: 'center' }}>
+          <Text style={{ color: barColor, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 }}>{Math.round(pct)}%</Text>
+          <Text style={{ color: barColor, fontSize: 9, fontWeight: '600', letterSpacing: 0.5 }}>USADO</Text>
         </View>
       </View>
-
-      {/* Stats row */}
-      <View style={{
-        flexDirection: 'row',
-        marginTop: 20,
-        paddingTop: 18,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
-      }}>
+      <View style={{ height: 6, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
+        <View style={{ width: (pct + '%') as any, height: '100%', backgroundColor: barColor, borderRadius: 99 }} />
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 }}>
+        <Text style={{ color: C.textMuted, fontSize: 10 }}>Ejecutado {formatCurrency(totalSpent)}</Text>
+        <Text style={{ color: C.textMuted, fontSize: 10 }}>Presup. {formatCurrency(budget)}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
         {[
-          { label: 'Ingresos', value: total_income, color: C.green },
-          { label: 'Gastos', value: total_expenses, color: C.red },
-          { label: 'Planillas', value: total_payroll, color: C.amber },
-        ].map((stat) => (
-          <View key={stat.label} style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={{ color: stat.color, fontSize: 15, fontWeight: '700', letterSpacing: -0.3 }}>
-              {formatCurrency(stat.value)}
-            </Text>
-            <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 3 }}>{stat.label}</Text>
+          { label: 'Ingresos', value: total_income,   bg: C.greenSoft, color: C.green },
+          { label: 'Gastos',   value: total_expenses, bg: C.redSoft,   color: C.red   },
+          { label: 'Planilla', value: total_payroll,  bg: C.amberSoft, color: C.amber },
+        ].map(s => (
+          <View key={s.label} style={{ flex: 1, backgroundColor: s.bg, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 6, alignItems: 'center' }}>
+            <Text style={{ color: s.color, fontSize: 13, fontWeight: '700', letterSpacing: -0.3 }}>{formatCurrency(s.value)}</Text>
+            <Text style={{ color: s.color + 'aa', fontSize: 9, fontWeight: '600', marginTop: 2, letterSpacing: 0.4 }}>{s.label.toUpperCase()}</Text>
           </View>
         ))}
       </View>
@@ -110,23 +85,22 @@ function BalanceCard({ total_income, total_expenses, total_payroll, balance, bud
   );
 }
 
-function QuickAction({ icon, label, onPress }: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  onPress: () => void;
+// ─── Secondary action button ────────────────────────────────────────────────
+function SecondaryAction({ icon, label, onPress, color = C.textSecondary }: {
+  icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void; color?: string;
 }) {
   return (
-    <TouchableOpacity
-      style={{ alignItems: 'center', flex: 1, paddingVertical: 8 }}
-      onPress={onPress}
-      activeOpacity={0.5}
-    >
-      <Ionicons name={icon} size={26} color={C.textSecondary} style={{ marginBottom: 8 }} />
-      <Text style={{ color: C.textMuted, fontSize: 10, textAlign: 'center', letterSpacing: 0.2 }}>{label}</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.6}
+      style={{ alignItems: 'center', flex: 1, backgroundColor: C.surface, borderRadius: 14, paddingVertical: 14, borderWidth: 1, borderColor: C.border }}>
+      <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: color + '18', justifyContent: 'center', alignItems: 'center', marginBottom: 6 }}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+      <Text style={{ color: C.textSecondary, fontSize: 10, fontWeight: '600', textAlign: 'center', letterSpacing: 0.2 }}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
+// ─── Dashboard ──────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
   const { project } = useProjectStore();
   const { signOut } = useAuthStore();
@@ -136,15 +110,13 @@ export default function DashboardScreen() {
   const { data: phases = [] } = usePhases();
   const updateProject = useUpdateProject();
 
-  // ── Rename modal state ──
   const [renameVisible, setRenameVisible] = useState(false);
+  const [showAllActions, setShowAllActions] = useState(false);
+  const [burnAlertVisible, setBurnAlertVisible] = useState(false);
+  const [negAlertVisible, setNegAlertVisible] = useState(false);
   const [renameText, setRenameText] = useState('');
 
-  function openRename() {
-    setRenameText(project?.name ?? '');
-    setRenameVisible(true);
-  }
-
+  function openRename() { setRenameText(project?.name ?? ''); setRenameVisible(true); }
   async function submitRename() {
     const name = renameText.trim();
     if (!name || !project) return;
@@ -152,267 +124,160 @@ export default function DashboardScreen() {
     setRenameVisible(false);
   }
 
-  const recentItems = [
-    ...expenses.slice(0, 5).map((e) => ({
-      id: e.id,
-      type: 'expense' as const,
-      label: e.description,
+  const showBurnAlert = useMemo(() => {
+    if (!balance || balance.balance <= 0) return false;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    const iso = cutoff.toISOString().split('T')[0];
+    const recentSpend = expenses.filter(e => e.date >= iso).reduce((s, e) => s + e.amount, 0);
+    const avgDaily = recentSpend / 30;
+    return avgDaily > 0 && balance.balance / avgDaily < 15;
+  }, [balance, expenses]);
+
+  useEffect(() => {
+    if (showBurnAlert) {
+      setBurnAlertVisible(true);
+      const t = setTimeout(() => setBurnAlertVisible(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [showBurnAlert]);
+
+  useEffect(() => {
+    if (balance && balance.balance < 0) {
+      setNegAlertVisible(true);
+      const t = setTimeout(() => setNegAlertVisible(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [balance?.balance]);
+
+  const recentItems = useMemo(() => [
+    ...expenses.slice(0, 5).map(e => ({
+      id: e.id, label: e.description,
       category: e.expense_categories?.name ?? 'Gasto',
-      amount: -e.amount,
-      date: e.date,
+      amount: -e.amount, date: e.date,
       color: e.expense_categories?.color ?? '#6b7280',
       icon: (e.expense_categories?.icon ?? 'receipt-outline') as keyof typeof Ionicons.glyphMap,
     })),
-    ...income.slice(0, 3).map((i) => ({
-      id: i.id,
-      type: 'income' as const,
-      label: i.description,
-      category: 'Ingreso',
-      amount: i.amount,
-      date: i.date,
+    ...income.slice(0, 3).map(i => ({
+      id: i.id, label: i.description,
+      category: 'Ingreso', amount: i.amount, date: i.date,
       color: C.green,
       icon: 'arrow-down-circle-outline' as keyof typeof Ionicons.glyphMap,
     })),
-  ]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 8);
+  ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8), [expenses, income]);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 110 }}
-        refreshControl={
-          <RefreshControl refreshing={loadingBalance} onRefresh={refetch} tintColor={C.accent} />
-        }
+        contentContainerStyle={{ padding: 20, paddingTop: 56, paddingBottom: 140 }}
+        refreshControl={<RefreshControl refreshing={loadingBalance} onRefresh={refetch} tintColor={C.accent} />}
       >
-        {/* ── Header ── */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            {/* Logo */}
-            <Image
-              source={require('../../assets/images/sunnycolor.png')}
-              style={{ width: 44, height: 44, borderRadius: 14 }}
-              resizeMode="contain"
-            />
-            <View>
-              <Text style={{ color: C.textMuted, fontSize: 10, letterSpacing: 1.2, fontWeight: '600', textTransform: 'uppercase', marginBottom: 3 }}>
-                {new Date().toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </Text>
-              {/* Tap the pencil to rename the project */}
-              <TouchableOpacity
-                onPress={openRename}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                activeOpacity={0.7}
-              >
-                <Text style={{ color: C.textPrimary, fontSize: 22, fontWeight: '700', letterSpacing: -0.5 }}>
-                  {project?.name ?? 'Mi Proyecto'}
-                </Text>
-                <Ionicons name="create-outline" size={16} color={C.textMuted} />
-              </TouchableOpacity>
+        {/* Header */}
+        <View style={{ marginBottom: 28, alignItems: 'center' }}>
+          <Image
+            source={require('../../assets/images/sunnycolor.png')}
+            style={{ width: 72, height: 72, borderRadius: 20, marginBottom: 12 }}
+            resizeMode="contain"
+          />
+          <Text style={{ color: C.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
+            PROYECTO
+          </Text>
+          <TouchableOpacity onPress={openRename} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} activeOpacity={0.7}>
+            <Text style={{ color: '#ffffff', fontSize: 32, fontWeight: '800', letterSpacing: -1, lineHeight: 36, textAlign: 'center' }}>
+              {project?.name ?? 'Mi Proyecto'}
+            </Text>
+            <Ionicons name="create-outline" size={18} color={C.textMuted} style={{ marginTop: 4 }} />
+          </TouchableOpacity>
+          <View style={{ height: 1, backgroundColor: '#4e5872', marginTop: 20, width: '100%' }} />
+        </View>
+
+        {/* Logout FAB */}
+        <TouchableOpacity
+          onPress={signOut}
+          style={{
+            position: 'absolute', top: 56, right: 20,
+            width: 34, height: 34, borderRadius: 10,
+            backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center',
+            borderWidth: 1, borderColor: C.border,
+            zIndex: 10,
+          }}
+        >
+          <Ionicons name="log-out-outline" size={15} color={C.textMuted} />
+        </TouchableOpacity>
+
+        {/* Balance widget */}
+        {balance
+          ? <BalanceWidget {...balance} />
+          : <View style={{ backgroundColor: C.surface, borderRadius: 22, padding: 20, marginBottom: 20, height: 160, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator color={C.accent} />
+            </View>
+        }
+
+        {/* Smart alerts */}
+        {burnAlertVisible && (
+          <View style={{ backgroundColor: C.amberSoft, borderRadius: 14, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: C.amber + '40' }}>
+            <Ionicons name="trending-down-outline" size={22} color={C.amber} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: C.amber, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>Ritmo de gasto elevado</Text>
+              <Text style={{ color: C.amber + 'bb', fontSize: 12 }}>Al ritmo actual, el saldo alcanza menos de 15 días</Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={signOut}
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center',
-              marginTop: 4,
-            }}
-          >
-            <Ionicons name="log-out-outline" size={16} color={C.textMuted} />
+        )}
+        {negAlertVisible && (
+          <View style={{ backgroundColor: C.redSoft, borderRadius: 14, padding: 14, marginBottom: 16, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: C.red + '40' }}>
+            <Ionicons name="alert-circle-outline" size={22} color={C.red} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: C.red, fontSize: 13, fontWeight: '700', marginBottom: 2 }}>Saldo negativo</Text>
+              <Text style={{ color: C.red + 'bb', fontSize: 12 }}>Registrá un ingreso para cubrir el déficit</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Secondary actions */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ color: C.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>Más acciones</Text>
+          <TouchableOpacity onPress={() => setShowAllActions(v => !v)}>
+            <Text style={{ color: C.accent, fontSize: 12, fontWeight: '600' }}>{showAllActions ? 'Mostrar menos ↑' : 'Mostrar todas →'}</Text>
           </TouchableOpacity>
         </View>
-
-        {/* ── Balance card ── */}
-        {balance ? (
-          <BalanceCard {...balance} />
-        ) : (
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: C.textMuted, fontSize: 12, letterSpacing: 0.5, fontWeight: '500', marginBottom: 4 }}>Saldo disponible</Text>
-            <Text style={{ color: C.textSecondary, fontSize: 32, fontWeight: '800' }}>...</Text>
-          </View>
-        )}
-
-        {/* ── Fases de obra ── */}
-        {phases.length > 0 && (
-          <>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: C.textSecondary, fontSize: 12, fontWeight: '500', letterSpacing: 0.5 }}>
-                Fases de obra
-              </Text>
-              <TouchableOpacity onPress={() => router.push('/(app)/schedule/phases')}>
-                <Text style={{ color: C.accent, fontSize: 12 }}>Ver todas</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginBottom: 24 }}
-              contentContainerStyle={{ gap: 10, paddingRight: 4 }}
-            >
-              {phases.map(ph => {
-                const phIncome = income.filter(i => i.phase_id === ph.id).reduce((s, i) => s + i.amount, 0);
-                const phExpenses = expenses.filter(e => e.phase_id === ph.id).reduce((s, e) => s + e.amount, 0);
-                const phBalance = phIncome - phExpenses;
-                return (
-                  <TouchableOpacity
-                    key={ph.id}
-                    onPress={() => router.push('/(app)/schedule/phases')}
-                    style={{
-                      backgroundColor: C.surface,
-                      borderRadius: 14,
-                      padding: 14,
-                      width: 150,
-                      borderLeftWidth: 3,
-                      borderLeftColor: ph.color,
-                    }}
-                  >
-                    <Text style={{ color: C.textPrimary, fontSize: 13, fontWeight: '700', marginBottom: 10 }} numberOfLines={1}>
-                      {ph.name}
-                    </Text>
-                    <Text style={{ color: C.textMuted, fontSize: 10, marginBottom: 2 }}>Gastos</Text>
-                    <Text style={{ color: C.red, fontSize: 14, fontWeight: '700', marginBottom: 8 }}>
-                      {formatCurrency(phExpenses)}
-                    </Text>
-                    <View style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginBottom: 8 }} />
-                    <Text style={{
-                      fontSize: 12, fontWeight: '700',
-                      color: phBalance >= 0 ? C.green : C.red,
-                    }}>
-                      {phBalance >= 0 ? '+' : ''}{formatCurrency(phBalance)}
-                    </Text>
-                    <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 1 }}>balance</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </>
-        )}
-
-        {/* ── Alertas ── */}
-        {balance && balance.balance < balance.budget * 0.1 && balance.balance >= 0 && (
-          <View style={{
-            backgroundColor: C.amber + '14', borderRadius: 12, padding: 12,
-            marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
-          }}>
-            <Ionicons name="warning-outline" size={18} color={C.amber} />
-            <Text style={{ color: C.amber, flex: 1, fontSize: 13 }}>Saldo bajo — menos del 10% del presupuesto</Text>
-          </View>
-        )}
-        {balance && balance.balance < 0 && (
-          <View style={{
-            backgroundColor: C.red + '14', borderRadius: 12, padding: 12,
-            marginBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 10,
-          }}>
-            <Ionicons name="alert-circle-outline" size={18} color={C.red} />
-            <Text style={{ color: C.red, flex: 1, fontSize: 13 }}>Saldo negativo — registrá una recarga de capital</Text>
-          </View>
-        )}
-
-        {/* ── Acciones rápidas ── */}
-        <Text style={{ color: C.textSecondary, fontSize: 12, fontWeight: '500', letterSpacing: 0.5, marginBottom: 12 }}>
-          Acciones rápidas
-        </Text>
-        <View style={{
-          backgroundColor: C.surface,
-          borderRadius: 18,
-          paddingVertical: 16,
-          paddingHorizontal: 8,
-          marginBottom: 24,
-        }}>
-          {/* Row 1 */}
-          <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-            <QuickAction
-              icon="receipt-outline"
-              label="Nuevo gasto"
-              onPress={() => router.push('/(app)/expenses/new')}
-            />
-            <QuickAction
-              icon="people-outline"
-              label="Pagar obrero"
-              onPress={() => router.push('/(app)/payroll/new-payment')}
-            />
-            <QuickAction
-              icon="arrow-down-circle-outline"
-              label="Ingreso"
-              onPress={() => router.push('/(app)/income/new')}
-            />
-          </View>
-          {/* Row 2 */}
-          <View style={{ flexDirection: 'row' }}>
-            <QuickAction
-              icon="cube-outline"
-              label="Materiales"
-              onPress={() => router.push('/(app)/inventory/')}
-            />
-            <QuickAction
-              icon="layers-outline"
-              label="Fases"
-              onPress={() => router.push('/(app)/schedule/phases')}
-            />
-            <QuickAction
-              icon="business-outline"
-              label="Proveedores"
-              onPress={() => router.push('/(app)/suppliers/')}
-            />
-          </View>
-          {/* Row 3 */}
-          <View style={{ flexDirection: 'row' }}>
-            <QuickAction
-              icon="calendar-outline"
-              label="Cronograma"
-              onPress={() => router.push('/(app)/schedule/')}
-            />
-            <QuickAction
-              icon="people-outline"
-              label="Planillas"
-              onPress={() => router.push('/(app)/payroll/')}
-            />
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAllActions ? 8 : 24 }}>
+          <SecondaryAction icon="cube-outline"     label="Materiales"  onPress={() => router.push('/(app)/inventory/')}  color={C.accent} />
+          <SecondaryAction icon="calendar-outline" label="Cronograma"  onPress={() => router.push('/(app)/schedule/')}   color={C.green}  />
+          <SecondaryAction icon="business-outline" label="Proveedores" onPress={() => router.push('/(app)/suppliers/')} color={C.amber}  />
+        </View>
+        {showAllActions && (
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+            <SecondaryAction icon="layers-outline" label="Fases"   onPress={() => router.push('/(app)/schedule/phases')} color={C.purple}        />
+            <SecondaryAction icon="people-outline" label="Obreros" onPress={() => router.push('/(app)/payroll/')}        color={C.textSecondary} />
             <View style={{ flex: 1 }} />
           </View>
-        </View>
+        )}
 
-        {/* ── Movimientos recientes ── */}
+        {/* Fases de obra — solo enlace */}
+        {phases.length > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <Text style={{ color: C.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' }}>Fases de obra</Text>
+            <TouchableOpacity onPress={() => router.push('/(app)/schedule/phases')}>
+              <Text style={{ color: C.accent, fontSize: 12, fontWeight: '600' }}>Ver todas →</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Recent transactions */}
         {recentItems.length > 0 && (
           <>
-            <Text style={{ color: C.textSecondary, fontSize: 12, fontWeight: '500', letterSpacing: 0.5, marginBottom: 12 }}>
-              Movimientos recientes
-            </Text>
-            <View style={{ backgroundColor: C.surface, borderRadius: 18, overflow: 'hidden' }}>
+            <Text style={{ color: C.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 }}>Últimos movimientos</Text>
+            <View style={{ backgroundColor: C.surface, borderRadius: 18, overflow: 'hidden', borderWidth: 1, borderColor: C.border }}>
               {recentItems.map((item, idx) => (
-                <View
-                  key={item.id}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    padding: 14,
-                    borderBottomWidth: idx < recentItems.length - 1 ? 1 : 0,
-                    borderBottomColor: 'rgba(255,255,255,0.05)',
-                  }}
-                >
-                  {/* Icon */}
-                  <View style={{
-                    width: 38, height: 38, borderRadius: 11,
-                    backgroundColor: item.color + '20',
-                    justifyContent: 'center', alignItems: 'center', marginRight: 12,
-                  }}>
+                <View key={item.id} style={{ flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderBottomWidth: idx < recentItems.length - 1 ? 1 : 0, borderBottomColor: C.border }}>
+                  <View style={{ width: 38, height: 38, borderRadius: 11, backgroundColor: item.color + '22', justifyContent: 'center', alignItems: 'center', marginRight: 12, marginTop: 2 }}>
                     <Ionicons name={item.icon} size={18} color={item.color} />
                   </View>
-                  {/* Text */}
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: C.textPrimary, fontSize: 14, fontWeight: '500' }} numberOfLines={1}>
-                      {item.label}
-                    </Text>
-                    <Text style={{ color: C.textMuted, fontSize: 11, marginTop: 1 }}>
-                      {item.category} · {formatDate(item.date)}
-                    </Text>
+                    <Text style={{ color: C.textPrimary, fontSize: 14, fontWeight: '600' }}>{item.label}</Text>
+                    <Text style={{ color: C.textMuted, fontSize: 11, marginTop: 2 }}>{item.category} · {formatDate(item.date)}</Text>
                   </View>
-                  {/* Amount */}
-                  <Text style={{
-                    color: item.amount >= 0 ? C.green : C.red,
-                    fontWeight: '700',
-                    fontSize: 14,
-                  }}>
+                  <Text style={{ color: item.amount >= 0 ? C.green : C.red, fontWeight: '700', fontSize: 14, marginTop: 2, marginLeft: 8 }}>
                     {item.amount >= 0 ? '+' : ''}{formatCurrency(item.amount)}
                   </Text>
                 </View>
@@ -422,57 +287,43 @@ export default function DashboardScreen() {
         )}
       </ScrollView>
 
-      {/* ── Rename project modal ── */}
+      {/* Primary FAB row — pinned to thumb zone */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 16, paddingBottom: 28, paddingTop: 12, backgroundColor: C.bg, borderTopWidth: 1, borderTopColor: C.border, flexDirection: 'row', gap: 10 }}>
+        <TouchableOpacity onPress={() => router.push('/(app)/expenses/')} activeOpacity={0.8}
+          style={{ flex: 2, backgroundColor: C.accent, borderRadius: 16, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Ionicons name="wallet-outline" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Gastos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/(app)/income/')} activeOpacity={0.8}
+          style={{ flex: 1, backgroundColor: C.greenSoft, borderRadius: 16, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: C.green + '60' }}>
+          <Ionicons name="cash-outline" size={22} color={C.green} />
+          <Text style={{ color: C.green, fontWeight: '700', fontSize: 11, marginTop: 3 }}>Ingresos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/(app)/payroll/payments')} activeOpacity={0.8}
+          style={{ flex: 1, backgroundColor: C.amberSoft, borderRadius: 16, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: C.amber + '60' }}>
+          <Ionicons name="people-outline" size={22} color={C.amber} />
+          <Text style={{ color: C.amber, fontWeight: '700', fontSize: 11, marginTop: 3 }}>Planilla</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Rename project modal */}
       <Modal visible={renameVisible} transparent animationType="fade" onRequestClose={() => setRenameVisible(false)}>
-        <View style={{
-          flex: 1, justifyContent: 'center', alignItems: 'center',
-          backgroundColor: 'rgba(0,0,0,0.6)',
-        }}>
-          <View style={{
-            backgroundColor: C.surfaceHigh, borderRadius: 20,
-            padding: 24, width: '85%', maxWidth: 380,
-          }}>
-            <Text style={{ color: C.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 6 }}>
-              Renombrar proyecto
-            </Text>
-            <Text style={{ color: C.textSecondary, fontSize: 13, marginBottom: 18 }}>
-              Ingresá el nuevo nombre para tu proyecto.
-            </Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <View style={{ backgroundColor: C.surfaceHigh, borderRadius: 20, padding: 24, width: '85%', maxWidth: 380 }}>
+            <Text style={{ color: C.textPrimary, fontSize: 18, fontWeight: '700', marginBottom: 6 }}>Renombrar proyecto</Text>
+            <Text style={{ color: C.textSecondary, fontSize: 13, marginBottom: 18 }}>Ingresá el nuevo nombre para tu proyecto.</Text>
             <TextInput
-              value={renameText}
-              onChangeText={setRenameText}
-              placeholder="Nombre del proyecto"
-              placeholderTextColor={C.textMuted}
-              autoFocus
-              maxLength={80}
-              style={{
-                backgroundColor: C.surface, borderRadius: 12,
-                borderWidth: 1, borderColor: C.border,
-                color: C.textPrimary, fontSize: 16,
-                paddingHorizontal: 14, paddingVertical: 12,
-                marginBottom: 20,
-              }}
+              value={renameText} onChangeText={setRenameText}
+              placeholder="Nombre del proyecto" placeholderTextColor={C.textMuted}
+              autoFocus maxLength={80}
+              style={{ backgroundColor: C.surface, borderRadius: 12, borderWidth: 1, borderColor: C.border, color: C.textPrimary, fontSize: 16, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 20 }}
             />
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TouchableOpacity
-                onPress={() => setRenameVisible(false)}
-                style={{
-                  flex: 1, paddingVertical: 13, borderRadius: 12,
-                  backgroundColor: C.surface,
-                  alignItems: 'center',
-                }}
-              >
+              <TouchableOpacity onPress={() => setRenameVisible(false)} style={{ flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: C.surface, alignItems: 'center' }}>
                 <Text style={{ color: C.textSecondary, fontWeight: '600', fontSize: 15 }}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={submitRename}
-                disabled={!renameText.trim() || updateProject.isPending}
-                style={{
-                  flex: 1, paddingVertical: 13, borderRadius: 12,
-                  backgroundColor: renameText.trim() ? C.accent : C.textMuted + '40',
-                  alignItems: 'center',
-                }}
-              >
+              <TouchableOpacity onPress={submitRename} disabled={!renameText.trim() || updateProject.isPending}
+                style={{ flex: 1, paddingVertical: 13, borderRadius: 12, backgroundColor: renameText.trim() ? C.accent : C.textMuted + '40', alignItems: 'center' }}>
                 {updateProject.isPending
                   ? <ActivityIndicator size="small" color="#fff" />
                   : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Guardar</Text>
