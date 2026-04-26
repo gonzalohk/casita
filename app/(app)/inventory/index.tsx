@@ -130,7 +130,7 @@ export default function InventoryScreen() {
             <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
               <Ionicons name="arrow-back" size={22} color="#8888aa" />
             </TouchableOpacity>
-            <Text style={{ color: '#f0f0ff', fontSize: 24, fontWeight: '700' }}>Materiales</Text>
+            <Text style={{ color: '#f0f0ff', fontSize: 24, fontWeight: '700' }}>Inventario</Text>
           </View>
           <TouchableOpacity
             style={{ backgroundColor: '#4f7bff', borderRadius: 12, padding: 10 }}

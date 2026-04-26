@@ -241,7 +241,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: showAllActions ? 8 : 24 }}>
-          <SecondaryAction icon="cube-outline"     label="Materiales"  onPress={() => router.push('/(app)/inventory/')}  color={C.accent} />
+          <SecondaryAction icon="cube-outline"     label="Inventario"  onPress={() => router.push('/(app)/inventory/')}  color={C.accent} />
           <SecondaryAction icon="calendar-outline" label="Cronograma"  onPress={() => router.push('/(app)/schedule/')}   color={C.green}  />
           <SecondaryAction icon="business-outline" label="Proveedores" onPress={() => router.push('/(app)/suppliers/')} color={C.amber}  />
         </View>
