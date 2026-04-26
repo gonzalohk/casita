@@ -44,8 +44,17 @@ function AuthGuard() {
 
   // Listen for auth state changes
   useEffect(() => {
+    const sessionTimeout = setTimeout(() => {
+      // If Supabase doesn't respond in 10s (e.g. free tier paused), treat as no session
+      setSession(null);
+    }, 10_000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(sessionTimeout);
       setSession(session);
+    }).catch(() => {
+      clearTimeout(sessionTimeout);
+      setSession(null);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -80,7 +89,14 @@ export default function RootLayout() {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
+      persistOptions={{
+        persister: asyncStoragePersister,
+        buster: '1',
+        onError: () => {
+          // If the persisted cache is corrupt, clear it so the app doesn't crash
+          queryClient.clear();
+        },
+      }}
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="light" />
