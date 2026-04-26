@@ -13,7 +13,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { useBalance } from '@/hooks/useBalance';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useIncome } from '@/hooks/useIncome';
@@ -102,7 +102,7 @@ function SecondaryAction({ icon, label, onPress, color = C.textSecondary }: {
 
 // ─── Dashboard ──────────────────────────────────────────────────────────────
 export default function DashboardScreen() {
-  const { project } = useProjectStore();
+  const { project, setProject } = useProjectStore();
   const { signOut } = useAuthStore();
   const { data: balance, isLoading: loadingBalance, refetch } = useBalance();
   const { data: expenses = [] } = useExpenses();
@@ -166,6 +166,11 @@ export default function DashboardScreen() {
     })),
   ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8), [expenses, income]);
 
+  // All hooks called — safe to redirect now
+  if (project === null) {
+    return <Redirect href={'/(app)/project-picker' as any} />;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
@@ -203,6 +208,20 @@ export default function DashboardScreen() {
           }}
         >
           <Ionicons name="log-out-outline" size={15} color={C.textMuted} />
+        </TouchableOpacity>
+
+        {/* Switch project */}
+        <TouchableOpacity
+          onPress={() => { setProject(null); }}
+          style={{
+            position: 'absolute', top: 56, right: 62,
+            width: 34, height: 34, borderRadius: 10,
+            backgroundColor: C.surface, justifyContent: 'center', alignItems: 'center',
+            borderWidth: 1, borderColor: C.border,
+            zIndex: 10,
+          }}
+        >
+          <Ionicons name="swap-horizontal-outline" size={15} color={C.textMuted} />
         </TouchableOpacity>
 
         {/* Balance widget */}
@@ -247,9 +266,9 @@ export default function DashboardScreen() {
         </View>
         {showAllActions && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
-            <SecondaryAction icon="layers-outline" label="Fases"   onPress={() => router.push('/(app)/schedule/phases')} color={C.purple}        />
-            <SecondaryAction icon="people-outline" label="Obreros" onPress={() => router.push('/(app)/payroll/')}        color={C.textSecondary} />
-            <View style={{ flex: 1 }} />
+            <SecondaryAction icon="layers-outline"       label="Fases"    onPress={() => router.push('/(app)/schedule/phases')} color={C.purple}        />
+            <SecondaryAction icon="people-outline"       label="Obreros"  onPress={() => router.push('/(app)/payroll/')}        color={C.textSecondary} />
+            <SecondaryAction icon="document-text-outline" label="Reportes" onPress={() => router.push('/(app)/reports' as any)}        color={C.amber}        />
           </View>
         )}
 

@@ -44,6 +44,7 @@ export const asyncStoragePersister = createAsyncStoragePersister({
 // Centralized query key factory to avoid typos.
 export const queryKeys = {
   project: ['project'] as const,
+  projects: ['projects'] as const,
   balance: ['balance'] as const,
   expenses: {
     all: ['expenses'] as const,

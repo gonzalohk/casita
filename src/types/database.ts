@@ -59,6 +59,8 @@ export interface Expense {
   date: string;
   receipt_url: string | null;
   phase_id: string | null;
+  unit_price: number | null;
+  quantity: number | null;
   created_at: string;
   // joined
   expense_categories?: ExpenseCategory;

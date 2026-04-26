@@ -111,7 +111,7 @@ export default function OnboardingScreen() {
 
       setProject(project);
       queryClient.invalidateQueries();
-      router.replace('/(app)');
+      router.replace('/(app)/project-picker' as any);
     } catch (err: any) {
       Alert.alert('Error', err.message ?? 'No se pudo crear el proyecto. Intentá de nuevo.');
     } finally {

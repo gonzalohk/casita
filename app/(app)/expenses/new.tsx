@@ -38,6 +38,8 @@ const expenseSchema = z.object({
   category_id: z.string().min(1, 'Seleccioná una categoría'),
   date: z.string().min(1, 'Campo requerido'),
   phase_id: z.string().min(1, 'Seleccioná una fase'),
+  unit_price: z.string().optional(),
+  quantity: z.string().optional(),
 });
 
 type ExpenseForm = z.infer<typeof expenseSchema>;
@@ -62,13 +64,25 @@ export default function NewExpenseScreen() {
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { description: '', amount: '', category_id: '', date: todayISO(), phase_id: '' },
+    defaultValues: { description: '', amount: '', category_id: '', date: todayISO(), phase_id: '', unit_price: '', quantity: '' },
   });
 
   const selectedCategoryId = watch('category_id');
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const selectedPhaseId = watch('phase_id');
   const selectedPhase = phases.find(p => p.id === selectedPhaseId);
+  const isMaterials = selectedCategory?.name?.toLowerCase().includes('material');
+  const unitPriceVal = watch('unit_price');
+  const quantityVal = watch('quantity');
+
+  // Auto-calculate amount when both unit_price and quantity are filled
+  useEffect(() => {
+    const up = parseFloat(unitPriceVal ?? '');
+    const qty = parseFloat(quantityVal ?? '');
+    if (!isNaN(up) && !isNaN(qty) && up > 0 && qty > 0) {
+      setValue('amount', (up * qty).toFixed(2), { shouldValidate: true });
+    }
+  }, [unitPriceVal, quantityVal]);
 
   useEffect(() => {
     if (phases.length > 0 && !selectedPhaseId) {
@@ -88,6 +102,8 @@ export default function NewExpenseScreen() {
         date: data.date,
         receipt_url: null,
         phase_id: data.phase_id || null,
+        unit_price: data.unit_price ? parseFloat(data.unit_price) : null,
+        quantity: data.quantity ? parseFloat(data.quantity) : null,
       });
       router.back();
     } catch (err: any) {
@@ -155,11 +171,57 @@ export default function NewExpenseScreen() {
                     keyboardType="numeric"
                     value={value}
                     onChangeText={onChange}
+                    editable={true}
                   />
                 )}
               />
+              {isMaterials && (
+                <Text style={{ color: C.muted, fontSize: 11, marginTop: 4 }}>
+                  Calculado a partir de precio × cantidad. Podés editarlo manualmente.
+                </Text>
+              )}
               {errors.amount && <Text style={{ color: C.error, fontSize: 12, marginTop: 4 }}>{errors.amount.message}</Text>}
             </View>
+
+            {/* Unit price + quantity — only for Materiales */}
+            {isMaterials && (
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, marginBottom: 2 }}>PRECIO UNITARIO (Bs)</Text>
+                  <Controller
+                    control={control}
+                    name="unit_price"
+                    render={({ field: { onChange, value } }) => (
+                      <TextInput
+                        style={fieldBorder(false)}
+                        placeholder="0.00"
+                        placeholderTextColor={C.border}
+                        keyboardType="numeric"
+                        value={value}
+                        onChangeText={onChange}
+                      />
+                    )}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.muted, fontSize: 11, letterSpacing: 1, marginBottom: 2 }}>CANTIDAD</Text>
+                  <Controller
+                    control={control}
+                    name="quantity"
+                    render={({ field: { onChange, value } }) => (
+                      <TextInput
+                        style={fieldBorder(false)}
+                        placeholder="1"
+                        placeholderTextColor={C.border}
+                        keyboardType="numeric"
+                        value={value}
+                        onChangeText={onChange}
+                      />
+                    )}
+                  />
+                </View>
+              </View>
+            )}
 
             {/* Category — dropdown */}
             <View>

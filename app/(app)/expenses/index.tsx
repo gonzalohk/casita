@@ -65,6 +65,11 @@ function ExpenseRow({ item, onDelete }: { item: Expense; onDelete: (id: string) 
         <Text style={{ color: '#8888aa', fontSize: 12, marginTop: 2 }}>
           {item.expense_categories?.name ?? 'Sin categoría'} · {formatDate(item.date)}
         </Text>
+        {item.unit_price != null && item.quantity != null && (
+          <Text style={{ color: '#5a6080', fontSize: 11, marginTop: 3 }}>
+            {item.quantity % 1 === 0 ? item.quantity.toFixed(0) : item.quantity} u. × Bs {item.unit_price.toFixed(2)}
+          </Text>
+        )}
       </View>
 
       {/* Amount + delete */}
