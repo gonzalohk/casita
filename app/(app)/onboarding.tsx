@@ -31,6 +31,7 @@ import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -57,7 +58,7 @@ type OnboardingForm = z.infer<typeof onboardingSchema>;
 
 export default function OnboardingScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const { setProject } = useProjectStore();
 
   const {
@@ -137,12 +138,34 @@ export default function OnboardingScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ flex: 1, padding: 24, paddingTop: 64 }}>
           <View style={{ marginBottom: 40 }}>
-            <Text style={{ fontSize: 28, fontWeight: '700', color: '#f0f0ff' }}>
-              ¡Bienvenido! 🏗️
-            </Text>
-            <Text style={{ fontSize: 16, color: '#8888aa', marginTop: 8 }}>
-              Configurá tu proyecto de construcción para empezar a gestionar gastos y presupuesto.
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <Text style={{ fontSize: 28, fontWeight: '700', color: '#f0f0ff' }}>
+                  Nuevo proyecto 🏗️
+                </Text>
+                <Text style={{ fontSize: 16, color: '#8888aa', marginTop: 8 }}>
+                  Configurá tu proyecto de construcción para empezar a gestionar gastos y presupuesto.
+                </Text>
+              </View>
+              <View style={{ gap: 8, alignItems: 'center' }}>
+                {router.canGoBack() && (
+                  <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#1c1c2e',
+                      justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#2a2a40' }}
+                  >
+                    <Ionicons name="arrow-back" size={18} color="#8888aa" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={signOut}
+                  style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: '#1c1c2e',
+                    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#2a2a40' }}
+                >
+                  <Ionicons name="log-out-outline" size={18} color="#8888aa" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           <View style={{ gap: 20 }}>

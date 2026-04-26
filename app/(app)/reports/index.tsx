@@ -13,8 +13,9 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { usePayroll } from '@/hooks/useWorkers';
 import { useExpenses } from '@/hooks/useExpenses';
+import { useIncome } from '@/hooks/useIncome';
 import { useProjectStore } from '@/stores/projectStore';
-import { PayrollEntry, Expense } from '@/types/database';
+import { PayrollEntry, Expense, IncomeEntry } from '@/types/database';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 
 const C = {
@@ -148,8 +149,15 @@ function buildPayrollHTML(entries: PayrollEntry[], projectName: string): string 
 </html>`;
 }
 
-function buildExpensesHTML(entries: Expense[], projectName: string): string {
+const INCOME_SOURCE_LABEL: Record<string, string> = {
+  personal: 'Capital propio',
+  loan: 'Préstamo',
+  other: 'Otro',
+};
+
+function buildExpensesHTML(entries: Expense[], incomeEntries: IncomeEntry[], projectName: string): string {
   const total = entries.reduce((s, e) => s + e.amount, 0);
+  const totalIncome = incomeEntries.reduce((s, e) => s + e.amount, 0);
   const now = new Date().toLocaleDateString('es-BO', { year: 'numeric', month: 'long', day: 'numeric' });
   const uniqueCategories = new Set(entries.map(e => e.expense_categories?.name ?? 'Sin categoría')).size;
 
@@ -235,6 +243,50 @@ function buildExpensesHTML(entries: Expense[], projectName: string): string {
       </tr>
     </tfoot>
   </table>
+  <div style="margin-top: 32px;">
+    <h2 style="font-size:15px;font-weight:800;color:#1a1a2e;margin:0 0 12px 0;padding-bottom:8px;border-bottom:3px solid #2dd68a">Ingresos</h2>
+    <div class="summary" style="margin-bottom:16px">
+      <table>
+        <tr>
+          <td><span class="s-label">Total de registros</span><span class="s-value">${incomeEntries.length}</span></td>
+          <td><span class="s-label">Total ingresado</span><span class="s-value" style="color:#1a7a4a">Bs ${totalIncome.toFixed(2)}</span></td>
+          <td><span class="s-label">Balance</span><span class="s-value" style="color:${totalIncome - total >= 0 ? '#1a7a4a' : '#c0392b'}">${totalIncome - total >= 0 ? '+' : ''}Bs ${(totalIncome - total).toFixed(2)}</span></td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:28px">#</th>
+          <th>Descripción</th>
+          <th>Fuente</th>
+          <th>Fecha</th>
+          <th style="text-align:right">Monto (Bs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${incomeEntries.length === 0
+          ? '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Sin registros de ingresos</td></tr>'
+          : incomeEntries.map((e, i) => `
+            <tr style="background:${i % 2 === 0 ? '#f0faf5' : '#ffffff'}">
+              <td style="text-align:center">${i + 1}</td>
+              <td><b>${e.description}</b></td>
+              <td>${INCOME_SOURCE_LABEL[e.source] ?? e.source}</td>
+              <td>${formatDate(e.date)}</td>
+              <td style="text-align:right"><b style="color:#1a7a4a">Bs ${e.amount.toFixed(2)}</b></td>
+            </tr>`).join('')
+        }
+      </tbody>
+      <tfoot>
+        <tr style="background:#1a4a2e">
+          <td colspan="4" style="text-align:right">TOTAL INGRESADO</td>
+          <td style="text-align:right">Bs ${totalIncome.toFixed(2)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
   <p class="footer">Casita Construcci&oacute;n &nbsp;&bull;&nbsp; ${projectName} &nbsp;&bull;&nbsp; ${now}</p>
 </body>
 </html>`;
@@ -244,6 +296,7 @@ export default function ReportsScreen() {
   const { project } = useProjectStore();
   const { data: payrollEntries = [], isLoading } = usePayroll();
   const { data: expenseEntries = [], isLoading: isLoadingExpenses } = useExpenses();
+  const { data: incomeEntries = [] } = useIncome();
   const [generating, setGenerating] = useState(false);
   const [generatingExpenses, setGeneratingExpenses] = useState(false);
 
@@ -285,7 +338,7 @@ export default function ReportsScreen() {
     if (generatingExpenses) return;
     setGeneratingExpenses(true);
     try {
-      const html = buildExpensesHTML(expenseEntries, project?.name ?? 'Mi Proyecto');
+      const html = buildExpensesHTML(expenseEntries, incomeEntries, project?.name ?? 'Mi Proyecto');
       if (Platform.OS === 'web') {
         const win = window.open('', '_blank');
         if (win) {
@@ -403,7 +456,7 @@ export default function ReportsScreen() {
           </View>
           <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: C.border }}>
             <Text style={{ color: C.textMuted, fontSize: 11, lineHeight: 17 }}>
-              Incluye: descripción, categoría, fecha, cantidad, precio unitario y monto.
+              Incluye: gastos (descripción, categoría, fecha, cantidad, precio unitario, monto) e ingresos (descripción, fuente, fecha, monto).
             </Text>
           </View>
         </TouchableOpacity>

@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useProjects } from '@/hooks/useProject';
 import { useProjectStore } from '@/stores/projectStore';
+import { useAuthStore } from '@/stores/authStore';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { Project } from '@/types/database';
 
@@ -91,8 +92,9 @@ function ProjectCard({ project, onSelect }: { project: Project; onSelect: () => 
 }
 
 export default function ProjectPickerScreen() {
-  const { data: projects = [], isPending } = useProjects();
+  const { data: projects = [], isPending, isError, error, refetch } = useProjects();
   const { setProject } = useProjectStore();
+  const { signOut } = useAuthStore();
 
   function handleSelect(project: Project) {
     setProject(project);
@@ -106,17 +108,44 @@ export default function ProjectPickerScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <View style={{ paddingHorizontal: 24, paddingTop: 64, paddingBottom: 16 }}>
-        <Text style={{ color: C.textPrimary, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
-          Mis proyectos
-        </Text>
-        <Text style={{ color: C.textMuted, fontSize: 14, marginTop: 6 }}>
-          Seleccioná un proyecto para continuar
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View>
+            <Text style={{ color: C.textPrimary, fontSize: 28, fontWeight: '800', letterSpacing: -0.5 }}>
+              Mis proyectos
+            </Text>
+            <Text style={{ color: C.textMuted, fontSize: 14, marginTop: 6 }}>
+              Seleccioná un proyecto para continuar
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={signOut}
+            style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: C.surface,
+              justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: C.border, marginTop: 4 }}
+          >
+            <Ionicons name="log-out-outline" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isPending ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={C.accent} />
+        </View>
+      ) : isError ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>
+          <Ionicons name="alert-circle-outline" size={52} color={C.red} />
+          <Text style={{ color: C.red, fontSize: 15, fontWeight: '600', marginTop: 16, textAlign: 'center' }}>
+            Error al cargar proyectos
+          </Text>
+          <Text style={{ color: C.textMuted, fontSize: 12, marginTop: 8, textAlign: 'center' }}>
+            {(error as any)?.message ?? 'Error desconocido'}
+          </Text>
+          <TouchableOpacity
+            onPress={() => refetch()}
+            style={{ marginTop: 24, backgroundColor: C.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700' }}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       ) : projects.length === 0 ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 }}>

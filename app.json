@@ -4,7 +4,7 @@
     "slug": "casita-construccion",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/sunnycolor.png",
     "scheme": "casita",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/sunnycolor.png",
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.casita.construccion"
@@ -26,7 +26,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/sunnycolor.png"
     },
     "plugins": [
       "expo-router",
