@@ -1,0 +1,20 @@
+name: DB Backup
+on:
+  schedule:
+    - cron: '0 2 * * *'  # cada día a las 2am UTC
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump DB
+        env:
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          pg_dump -h db.${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co \
+            -p 5432 -U postgres -d postgres -F c -f backup.dump
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup.dump
+          retention-days: 30
