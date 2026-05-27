@@ -39,3 +39,4 @@
 - Expo SDK 51 (not the latest) — upgrade needed before major feature work
 - RLS policies are fully open (`auth.uid() is not null`) — acceptable for personal use, not for SaaS
 - Report screen only covers payroll PDF; expense and income PDF reports not yet built
+- **Supabase Data API grants**: `012_grant_public_tables.sql` added to cover all existing tables before the Oct 30, 2026 enforcement deadline; any future `create table` in `public` must include an explicit `grant all on <table> to authenticated`
